@@ -70,6 +70,8 @@
 #include "CharacterDatabaseCleaner.h"
 #include "InstanceScript.h"
 #include <cmath>
+#include "OutdoorPvPWG.h"
+#include "Config.h"
 
 #define ZONE_UPDATE_INTERVAL (1*IN_MILLISECONDS)
 
@@ -1050,9 +1052,12 @@ int32 Player::getMaxTimer(MirrorTimerType timer)
 {
     switch (timer)
     {
+	if(sConfig->GetBoolDefault("fatigue.enabled", true)) // If "fatigue.enabled" is enabled
+		{
         case FATIGUE_TIMER:
             return MINUTE * IN_MILLISECONDS;
-        case BREATH_TIMER:
+		}
+		case BREATH_TIMER:
         {
             if (!isAlive() || HasAuraType(SPELL_AURA_WATER_BREATHING) || GetSession()->GetSecurity() >= AccountTypes(sWorld->getIntConfig(CONFIG_DISABLE_BREATHING)))
                 return DISABLED_MIRROR_TIMER;
@@ -1122,6 +1127,9 @@ void Player::HandleDrowning(uint32 time_diff)
     }
 
     // In dark water
+if(sConfig->GetBoolDefault("fatigue.enabled", true)) // If "fatigue.enabled" is enabled
+{
+
     if (m_MirrorTimerFlags & UNDERWARER_INDARKWATER)
     {
         // Fatigue timer not activated - activate it
@@ -1158,7 +1166,7 @@ void Player::HandleDrowning(uint32 time_diff)
         else if (m_MirrorTimerFlagsLast & UNDERWARER_INDARKWATER)
             SendMirrorTimer(FATIGUE_TIMER, DarkWaterTime, m_MirrorTimer[FATIGUE_TIMER], 10);
     }
-
+}
     if (m_MirrorTimerFlags & (UNDERWATER_INLAVA|UNDERWATER_INSLIME))
     {
         // Breath timer not activated - activate it
@@ -2316,7 +2324,7 @@ void Player::Regenerate(Powers power)
         return;
 
     addvalue += m_powerFraction[power];
-    uint32 integerValue = uint32(abs(addvalue));
+    uint32 integerValue = uint32(fabs(addvalue));
 
     if (addvalue < 0.0f)
     {
@@ -8822,6 +8830,13 @@ void Player::SendInitWorldStates(uint32 zoneid, uint32 areaid)
                                                             // 8 Arena season id
     data << uint32(0xF3D) << uint32(sWorld->getIntConfig(CONFIG_ARENA_SEASON_ID));
 
+    // May be send timer to start Wintergrasp
+    if(sWorld->GetWintergrapsState()==4354)
+        data << uint32(0x1102) << sWorld->GetWintergrapsTimer();
+    else
+        data << uint32(0xEC5) << sWorld->GetWintergrapsTimer();
+    // ---
+
     if (mapid == 530)                                       // Outland
     {
         data << uint32(0x9bf) << uint32(0x0);               // 7
@@ -14195,6 +14210,52 @@ void Player::SendPreparedQuest(uint64 guid)
                     PlayerTalkClass->SendQuestGiverQuestDetails(pQuest, guid, true);
             }
         }
+    }
+    // multiple entries
+    else
+    {
+        QEmote qe;
+        qe._Delay = 0;
+        qe._Emote = 0;
+        std::string title = "";
+
+        // need pet case for some quests
+        Creature *pCreature = ObjectAccessor::GetCreatureOrPetOrVehicle(*this,guid);
+        if (pCreature)
+        {
+            uint32 textid = GetGossipTextId(pCreature);
+            GossipText const* gossiptext = sObjectMgr->GetGossipText(textid);
+            if (!gossiptext)
+            {
+                qe._Delay = 0;                              //TEXTEMOTE_MESSAGE;              //zyg: player emote
+                qe._Emote = 0;                              //TEXTEMOTE_HELLO;                //zyg: NPC emote
+                title = "";
+            }
+            else
+            {
+                qe = gossiptext->Options[0].Emotes[0];
+
+                if (!gossiptext->Options[0].Text_0.empty())
+                {
+                    title = gossiptext->Options[0].Text_0;
+
+                    int loc_idx = GetSession()->GetSessionDbLocaleIndex();
+                    if (loc_idx >= 0)
+                        if (NpcTextLocale const *nl = sObjectMgr->GetNpcTextLocale(textid))
+                            sObjectMgr->GetLocaleString(nl->Text_0[0], loc_idx, title);
+                }
+                else
+                {
+                    title = gossiptext->Options[0].Text_1;
+
+                    int loc_idx = GetSession()->GetSessionDbLocaleIndex();
+                    if (loc_idx >= 0)
+                        if (NpcTextLocale const *nl = sObjectMgr->GetNpcTextLocale(textid))
+                            sObjectMgr->GetLocaleString(nl->Text_1[0], loc_idx, title);
+                }
+            }
+        }
+        PlayerTalkClass->SendQuestGiverQuestList(qe, title, guid);
     }
 }
 
