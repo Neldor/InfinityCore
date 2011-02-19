@@ -126,16 +126,16 @@ int Master::Run()
     sLog->outString("%s (core-daemon)", _FULLVERSION);
     sLog->outString("<Ctrl-C> to stop.\n");
 
-    sLog->outString( " ______             ___                 __                ");
-    sLog->outString( "/\__  _\          /'___\ __          __/\ \__             ");
-    sLog->outString( "\/_/\ \/     ___ /\ \__//\_\    ___ /\_\ \ ,_\  __  __    ");
-    sLog->outString( "   \ \ \   /' _ `\ \ ,__\/\ \ /' _ `\/\ \ \ \/ /\ \/\ \   ");
-    sLog->outString( "    \_\ \__/\ \/\ \ \ \_/\ \ \/\ \/\ \ \ \ \ \_\ \ \_\ \  ");
-    sLog->outString( "    /\_____\ \_\ \_\ \_\  \ \_\ \_\ \_\ \_\ \__\\/`____ \ ");
-    sLog->outString( "    \/_____/\/_/\/_/\/_/   \/_/\/_/\/_/\/_/\/__/ `/___/> \");
-    sLog->outString( "                                 C O R E            /\___/");
-    sLog->outString( "                                                    \/__/ ");
-    sLog->outString( "http://www.l33t-net.org");
+    sLog->outString(" ______             ___                 __                ");
+    sLog->outString("/\\__  _\\          /'___\\ __          __/\\ \\__             ");
+    sLog->outString("\\/_/\\ \\/     ___ /\\ \\__//\\_\\    ___ /\\_\\ \\ ,_\\  __  __    ");
+    sLog->outString("   \\ \\ \\   /' _ `\\ \\ ,__\\/\\ \\ /' _ `\\/\\ \\ \\ \\/ /\\ \\/\\ \\   ");
+    sLog->outString("    \\_\\ \\__/\\ \\/\\ \\ \\ \\_/\\ \\ \\/\\ \\/\\ \\ \\ \\ \\ \\_\\ \\ \\_\\ \\  ");
+    sLog->outString("    /\\_____\\ \\_\\ \\_\\ \\_\\  \\ \\_\\ \\_\\ \\_\\ \\_\\ \\__\\\\/`____ \\ ");
+    sLog->outString("    \\/_____/\\/_/\\/_/\\/_/   \\/_/\\/_/\\/_/\\/_/\\/__/ `/___/> \\");
+    sLog->outString("                                 C O R E            /\\___/");
+    sLog->outString("                                                    \\/__/ ");
+    sLog->outString("http://www.l33t-net.org");
 
 #ifdef USE_SFMT_FOR_RNG
     sLog->outString("\n");
