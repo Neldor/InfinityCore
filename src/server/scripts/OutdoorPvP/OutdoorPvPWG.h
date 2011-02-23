@@ -61,8 +61,6 @@ enum OutdoorPvPWGSpell
 
     SPELL_TELEPORT_DALARAN                       = 53360,
     SPELL_VICTORY_AURA                           = 60044,
-
-	SPELL_PARACHUTE_WG                           = 61360,
 };
 
 const uint16 GameEventWintergraspDefender[2] = {50, 51};
