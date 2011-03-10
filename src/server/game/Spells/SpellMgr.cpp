@@ -28,8 +28,6 @@
 #include "CreatureAI.h"
 #include "MapManager.h"
 #include "BattlegroundIC.h"
-#include "OutdoorPvPMgr.h"
-#include "OutdoorPvPWG.h"
 
 bool IsAreaEffectTarget[TOTAL_SPELL_TARGETS];
 SpellEffectTargetTypes EffectTargetType[TOTAL_SPELL_EFFECTS];
@@ -3062,8 +3060,6 @@ bool IsPartOfSkillLine(uint32 skillId, uint32 spellId)
 
 bool SpellArea::IsFitToRequirements(Player const* player, uint32 newZone, uint32 newArea) const
 {
-    OutdoorPvPWG *pvpWG = (OutdoorPvPWG*)sOutdoorPvPMgr->GetOutdoorPvPToZoneId(4197);
-
     if (gender != GENDER_NONE)                   // not in expected gender
         if (!player || gender != player->getGender())
             return false;
@@ -3103,19 +3099,6 @@ bool SpellArea::IsFitToRequirements(Player const* player, uint32 newZone, uint32
                     return false;
                 break;
             }
-        case 58730: // No fly Zone - Wintergrasp
-			{
-				if (sWorld->getBoolConfig(CONFIG_OUTDOORPVP_WINTERGRASP_ENABLED))
-				{
-				  if ((pvpWG->isWarTime()==false) || !player || (!player->HasAuraType(SPELL_AURA_MOD_INCREASE_MOUNTED_FLIGHT_SPEED) && !player->HasAuraType(SPELL_AURA_FLY)) || player->HasAura(45472) || player->HasAura(44795) || player->GetPositionZ() > 619.2f || player->isInFlight())
-				    return false;
-				}
-                break;
-			}
-        case 58045: // Essence of Wintergrasp - Wintergrasp
-        case 57940: // Essence of Wintergrasp - Northrend
-             if (!player || player->GetTeamId() != sWorld->getWorldState(WORLDSTATE_WINTERGRASP_CONTROLING_FACTION))
-             return false;
         case SPELL_OIL_REFINERY: // Oil Refinery - Isle of Conquest.
         case SPELL_QUARRY: // Quarry - Isle of Conquest.
             {
@@ -3192,6 +3175,34 @@ bool SpellMgr::CanAurasStack(Aura const *aura1, Aura const *aura2, bool sameCast
                     break;
             }
         }
+    }
+
+    bool isVehicleAura1 = false;
+    bool isVehicleAura2 = false;
+    uint8 i = 0;
+    while (i < MAX_SPELL_EFFECTS && !(isVehicleAura1 && isVehicleAura2))
+    {
+        if (spellInfo_1->EffectApplyAuraName[i] == SPELL_AURA_CONTROL_VEHICLE)
+            isVehicleAura1 = true;
+        if (spellInfo_2->EffectApplyAuraName[i] == SPELL_AURA_CONTROL_VEHICLE)
+            isVehicleAura2 = true;
+
+        ++i;
+    }
+
+    if (isVehicleAura1 && isVehicleAura2)
+    {
+        Vehicle* veh = NULL;
+        if (aura1->GetOwner()->ToUnit())
+            veh = aura1->GetOwner()->ToUnit()->GetVehicleKit();
+
+        if (!veh)           // We should probably just let it stack. Vehicle system will prevent undefined behaviour later
+            return true;
+
+        if (!veh->GetAvailableSeatCount())
+            return false;   // No empty seat available
+
+        return true;        // Empty seat available (skip rest)
     }
 
     uint32 spellId_1 = GetLastSpellInChain(spellInfo_1->Id);
@@ -3605,6 +3616,10 @@ void SpellMgr::LoadSpellCustomAttr()
 
         switch (i)
         {
+        case 36350: //They Must Burn Bomb Aura (self)
+            spellInfo->EffectTriggerSpell[0] = 36325; // They Must Burn Bomb Drop (DND)
+            count++;
+            break;
         case 49838: // Stop Time
             spellInfo->AttributesEx3 |= SPELL_ATTR3_NO_INITIAL_AGGRO;
             count++;

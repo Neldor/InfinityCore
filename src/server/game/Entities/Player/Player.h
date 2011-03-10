@@ -988,18 +988,6 @@ class TradeData
         uint64     m_items[TRADE_SLOT_COUNT];               // traded itmes from m_player side including non-traded slot
 };
 
-struct AnticheatData
-{
-    uint32 lastOpcode;
-    MovementInfo lastMovementInfo;
-    bool disableACCheck;
-    uint32 disableACCheckTimer;
-    uint32 total_reports;
-    uint32 type_reports[5];
-    uint32 average;
-    uint64 creation_time;
-};
-
 class Player : public Unit, public GridObject<Player>
 {
     friend class WorldSession;
@@ -1008,8 +996,6 @@ class Player : public Unit, public GridObject<Player>
     public:
         explicit Player (WorldSession *session);
         ~Player ();
-
-        AnticheatData anticheatData;
 
         void CleanupsBeforeDelete(bool finalCleanup = true);
 
@@ -2746,10 +2732,11 @@ void AddItemsSetItem(Player*player,Item *item);
 void RemoveItemsSetItem(Player*player,ItemPrototype const *proto);
 
 // "the bodies of template functions must be made available in a header file"
-template <class T> T Player::ApplySpellMod(uint32 spellId, SpellModOp op, T &basevalue, Spell * spell)
+template <class T> T Player::ApplySpellMod(uint32 spellId, SpellModOp op, T &basevalue, Spell* spell)
 {
-    SpellEntry const *spellInfo = sSpellStore.LookupEntry(spellId);
-    if (!spellInfo) return 0;
+    SpellEntry const* spellInfo = sSpellStore.LookupEntry(spellId);
+    if (!spellInfo)
+        return 0;
     float totalmul = 1.0f;
     int32 totalflat = 0;
 
@@ -2765,7 +2752,7 @@ template <class T> T Player::ApplySpellMod(uint32 spellId, SpellModOp op, T &bas
         if (!mod->ownerAura)
             ASSERT(mod->charges == 0);
 
-        if (!IsAffectedBySpellmod(spellInfo,mod,spell))
+        if (!IsAffectedBySpellmod(spellInfo, mod, spell))
             continue;
 
         if (mod->type == SPELLMOD_FLAT)
@@ -2776,8 +2763,8 @@ template <class T> T Player::ApplySpellMod(uint32 spellId, SpellModOp op, T &bas
             if (basevalue == T(0))
                 continue;
 
-            // special case (skip >10sec spell casts for instant cast setting)
-            if (mod->op == SPELLMOD_CASTING_TIME  && basevalue >= T(10000) && mod->value <= -100)
+            // special case (skip > 10sec spell casts for instant cast setting)
+            if (mod->op == SPELLMOD_CASTING_TIME && basevalue >= T(10000) && mod->value <= -100)
                 continue;
 
             AddPctN(totalmul, mod->value);

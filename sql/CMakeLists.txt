@@ -15,7 +15,6 @@ if( WITH_SQL )
       scripts
       base
       create
-	  extras
     DESTINATION
       shared/trinity/sql
   )

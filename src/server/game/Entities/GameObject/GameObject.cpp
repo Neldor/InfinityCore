@@ -306,7 +306,7 @@ void GameObject::Update(uint32 diff)
                             udata.BuildPacket(&packet);
                             caster->ToPlayer()->GetSession()->SendPacket(&packet);
 
-                            SendCustomAnim();
+                            SendCustomAnim(GetGoAnimProgress());
                         }
 
                         m_lootState = GO_READY;                 // can be successfully open with some chance
@@ -1212,7 +1212,7 @@ void GameObject::Use(Unit* user)
 
             // this appear to be ok, however others exist in addition to this that should have custom (ex: 190510, 188692, 187389)
             if (time_to_restore && info->goober.customAnim)
-                SendCustomAnim();
+                SendCustomAnim(GetGoAnimProgress());
             else
                 SetGoState(GO_STATE_ACTIVE);
 
@@ -1637,11 +1637,11 @@ void GameObject::CastSpell(Unit* target, uint32 spellId)
     //trigger->RemoveCorpse();
 }
 
-void GameObject::SendCustomAnim()
+void GameObject::SendCustomAnim(uint32 anim)
 {
     WorldPacket data(SMSG_GAMEOBJECT_CUSTOM_ANIM,8+4);
     data << GetGUID();
-    data << uint32(GetGoAnimProgress());
+    data << uint32(anim);
     SendMessageToSet(&data, true);
 }
 
@@ -1693,7 +1693,7 @@ void GameObject::TakenDamage(uint32 damage, Unit *who)
             RemoveFlag(GAMEOBJECT_FLAGS, GO_FLAG_DAMAGED);
 
             SetFlag(GAMEOBJECT_FLAGS, GO_FLAG_DESTROYED);
-            //SetUInt32Value(GAMEOBJECT_DISPLAYID, m_goInfo->building.destroyedDisplayId);
+            SetUInt32Value(GAMEOBJECT_DISPLAYID, m_goInfo->building.destroyedDisplayId);
             EventInform(m_goInfo->building.destroyedEvent);
             if (pwho)
                 if (Battleground* bg = pwho->GetBattleground())
@@ -1719,7 +1719,7 @@ void GameObject::TakenDamage(uint32 damage, Unit *who)
                 m_goValue->building.health = 1;
 
             SetFlag(GAMEOBJECT_FLAGS, GO_FLAG_DAMAGED);
-            //SetUInt32Value(GAMEOBJECT_DISPLAYID, m_goInfo->building.damagedDisplayId);
+            SetUInt32Value(GAMEOBJECT_DISPLAYID, m_goInfo->building.damagedDisplayId);
             EventInform(m_goInfo->building.damagedEvent);
             hitType = BG_OBJECT_DMG_HIT_TYPE_JUST_HIGH_DAMAGED;
         }
