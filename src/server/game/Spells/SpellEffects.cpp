@@ -16,6 +16,7 @@
  * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "AnticheatMgr.h"
 #include "Common.h"
 #include "DatabaseEnv.h"
 #include "WorldPacket.h"
@@ -48,6 +49,7 @@
 #include "BattlegroundEY.h"
 #include "BattlegroundWS.h"
 #include "OutdoorPvPMgr.h"
+#include "OutdoorPvPWG.h"
 #include "Language.h"
 #include "SocialMgr.h"
 #include "Util.h"
@@ -4385,6 +4387,24 @@ void Spell::EffectScriptEffect(SpellEffIndex effIndex)
         {
             switch(m_spellInfo->Id)
             {
+                //Teleport to Lake Wintergrasp
+                case 58622:
+                {
+                  if (OutdoorPvPWG *pvpWG = (OutdoorPvPWG*)sOutdoorPvPMgr->GetOutdoorPvPToZoneId(4197))
+                     if (unitTarget->getLevel() > 74)
+                     {
+                       if ((pvpWG->getDefenderTeam()==TEAM_ALLIANCE) && (unitTarget->ToPlayer()->GetTeam() == ALLIANCE))
+                          unitTarget->CastSpell(unitTarget, SPELL_TELEPORT_FORTRESS, true);
+                       else if ((pvpWG->getDefenderTeam()==TEAM_ALLIANCE) && (unitTarget->ToPlayer()->GetTeam() == HORDE))
+                          unitTarget->CastSpell(unitTarget, SPELL_TELEPORT_HORDE_CAMP, true);
+
+                       if ((pvpWG->getDefenderTeam()!=TEAM_ALLIANCE) && (unitTarget->ToPlayer()->GetTeam() == HORDE))
+                          unitTarget->CastSpell(unitTarget, SPELL_TELEPORT_FORTRESS, true);
+                       else if ((pvpWG->getDefenderTeam()!=TEAM_ALLIANCE) && (unitTarget->ToPlayer()->GetTeam() == ALLIANCE))
+                          unitTarget->CastSpell(unitTarget, SPELL_TELEPORT_ALLIENCE_CAMP, true);
+                     }
+                return;
+                }
                 // Glyph of Backstab
                 case 63975:
                 {
@@ -6065,6 +6085,9 @@ void Spell::EffectCharge(SpellEffIndex /*effIndex*/)
     if (!target)
         return;
 
+    if (m_caster->ToPlayer())
+        sAnticheatMgr->DisableAnticheatDetection(m_caster->ToPlayer());
+
     float x, y, z;
     target->GetContactPoint(m_caster, x, y, z);
     m_caster->GetMotionMaster()->MoveCharge(x, y, z);
@@ -6078,6 +6101,9 @@ void Spell::EffectChargeDest(SpellEffIndex /*effIndex*/)
 {
     if (m_targets.HasDst())
     {
+        if (m_caster->ToPlayer())
+            sAnticheatMgr->DisableAnticheatDetection(m_caster->ToPlayer());
+
         float x, y, z;
         m_targets.m_dstPos.GetPosition(x, y, z);
         m_caster->GetMotionMaster()->MoveCharge(x, y, z);
@@ -6137,6 +6163,9 @@ void Spell::EffectKnockBack(SpellEffIndex effIndex)
 
 void Spell::EffectLeapBack(SpellEffIndex effIndex)
 {
+    if (m_caster->ToPlayer())
+        sAnticheatMgr->DisableAnticheatDetection(m_caster->ToPlayer());
+
     float speedxy = float(m_spellInfo->EffectMiscValue[effIndex])/10;
     float speedz = float(damage/10);
     if (!speedxy)
@@ -7045,6 +7074,19 @@ void Spell::EffectPlayerNotification(SpellEffIndex effIndex)
     switch(m_spellInfo->Id)
     {
         case 58730: // Restricted Flight Area
+        {
+             if (sWorld->getBoolConfig(CONFIG_OUTDOORPVP_WINTERGRASP_ENABLED))
+             {
+                OutdoorPvPWG *pvpWG = (OutdoorPvPWG*)sOutdoorPvPMgr->GetOutdoorPvPToZoneId(4197);
+                if (pvpWG->isWarTime()==true)
+                {
+                   unitTarget->ToPlayer()->GetSession()->SendNotification(LANG_ZONE_NOFLYZONE);
+                   unitTarget->PlayDirectSound(9417); // Fel Reaver sound
+                   unitTarget->MonsterTextEmote("The air is too thin in Wintergrasp for normal flight. You will be ejected in 9 sec.",unitTarget->GetGUID(),true);
+                } else unitTarget->RemoveAura(58730);
+              }
+            break;
+        }
         case 58600: // Restricted Flight Area
             unitTarget->ToPlayer()->GetSession()->SendNotification(LANG_ZONE_NOFLYZONE);
             break;

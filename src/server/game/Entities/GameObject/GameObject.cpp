@@ -451,6 +451,11 @@ void GameObject::Update(uint32 diff)
                         if (goInfo->trap.spellId)
                             CastSpell(ok, goInfo->trap.spellId);
 
+                        // allow to use scripts
+                        if (ok->GetTypeId() == TYPEID_PLAYER)
+                            if (sScriptMgr->OnGossipHello(ok->ToPlayer(), this))
+                                return;
+
                         m_cooldownTime = time(NULL) + 4;        // 4 seconds
 
                         if (owner)  // || goInfo->trap.charges == 1)
@@ -1693,7 +1698,7 @@ void GameObject::TakenDamage(uint32 damage, Unit *who)
             RemoveFlag(GAMEOBJECT_FLAGS, GO_FLAG_DAMAGED);
 
             SetFlag(GAMEOBJECT_FLAGS, GO_FLAG_DESTROYED);
-            SetUInt32Value(GAMEOBJECT_DISPLAYID, m_goInfo->building.destroyedDisplayId);
+            //SetUInt32Value(GAMEOBJECT_DISPLAYID, m_goInfo->building.destroyedDisplayId);
             EventInform(m_goInfo->building.destroyedEvent);
             if (pwho)
                 if (Battleground* bg = pwho->GetBattleground())
@@ -1719,7 +1724,7 @@ void GameObject::TakenDamage(uint32 damage, Unit *who)
                 m_goValue->building.health = 1;
 
             SetFlag(GAMEOBJECT_FLAGS, GO_FLAG_DAMAGED);
-            SetUInt32Value(GAMEOBJECT_DISPLAYID, m_goInfo->building.damagedDisplayId);
+            //SetUInt32Value(GAMEOBJECT_DISPLAYID, m_goInfo->building.damagedDisplayId);
             EventInform(m_goInfo->building.damagedEvent);
             hitType = BG_OBJECT_DMG_HIT_TYPE_JUST_HIGH_DAMAGED;
         }
