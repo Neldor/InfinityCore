@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2011 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2012 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -15,21 +15,30 @@
  * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "ScriptPCH.h"
+#include "ScriptMgr.h"
 #include "ulduar.h"
 
-enum Sara_Yells
+enum Sara
 {
-    SAY_SARA_PREFIGHT_1                         = -1603310,
-    SAY_SARA_PREFIGHT_2                         = -1603311,
-    SAY_SARA_AGGRO_1                            = -1603312,
-    SAY_SARA_AGGRO_2                            = -1603313,
-    SAY_SARA_AGGRO_3                            = -1603314,
-    SAY_SARA_SLAY_1                             = -1603315,
-    SAY_SARA_SLAY_2                             = -1603316,
-    WHISP_SARA_INSANITY                         = -1603317,
-    SAY_SARA_PHASE2_1                           = -1603318,
-    SAY_SARA_PHASE2_2                           = -1603319,
+    // text
+    YELL_SARA_PREFIGHT                          = 0,
+    YELL_COMBAT_PHASE_1                         = 1,
+    YELL_COMBAT_PHASE_2                         = 2,
+    YELL_SLAY                                   = 3,
+
+    // Phase 1 spells
+    SPELL_SARAS_ANGER_1                         = 63147, // Target Entry 33136
+    SPELL_SARAS_ANGER_2                         = 63744, // Target Entry 33136
+    SPELL_SARAS_FEVOR_1                         = 63138, // Target Player
+    SPELL_SARAS_FEVOR_2                         = 63747, // Target Player
+    SPELL_SARAS_BLESSING_1                      = 63134, // Target Player
+    SPELL_SARAS_BLESSING_2                      = 63745, // Target Self
+
+    // Phase 2 spells
+    SPELL_PHYCHOSIS                             = 63795, // Target Self
+    SPELL_MALADY_OF_THE_MIND                    = 63830, // Target Self
+    SPELL_DEATH_RAY                             = 63891, // Target Self
+    SPELL_BRAIN_LINK                            = 63802, // Target Self
 };
 
 enum YoggSaron_Yells
@@ -52,3 +61,7 @@ enum
 {
     ACHIEV_TIMED_START_EVENT                      = 21001,
 };
+//not in scriptloader yet just to remove warning boss_yoggsaron.obj : warning LNK4221: no public symbols found; archive member will be inaccessible
+void AddSC_boss_yoggsaron()
+{
+}

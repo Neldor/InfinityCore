@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2011 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2012 TrinityCore <http://www.trinitycore.org/>
  * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -15,10 +15,11 @@
  * You should have received a copy of the GNU General Public License along
  * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 #ifndef __BATTLEGROUNDBE_H
 #define __BATTLEGROUNDBE_H
 
-class Battleground;
+#include "Battleground.h"
 
 enum BattlegroundBEObjectTypes
 {
@@ -41,36 +42,26 @@ enum BattlegroundBEObjects
     BG_BE_OBJECT_TYPE_BUFF_2    = 184664
 };
 
-class BattlegroundBEScore : public BattlegroundScore
-{
-    public:
-        BattlegroundBEScore() {};
-        virtual ~BattlegroundBEScore() {};
-};
-
 class BattlegroundBE : public Battleground
 {
-    friend class BattlegroundMgr;
-
     public:
         BattlegroundBE();
         ~BattlegroundBE();
-        void Update(uint32 diff);
 
         /* inherited from BattlegroundClass */
-        virtual void AddPlayer(Player *plr);
-        virtual void StartingEventCloseDoors();
-        virtual void StartingEventOpenDoors();
+        void AddPlayer(Player* player);
+        void StartingEventCloseDoors();
+        void StartingEventOpenDoors();
 
-        void RemovePlayer(Player *plr, uint64 guid);
-        void HandleAreaTrigger(Player *Source, uint32 Trigger);
+        void RemovePlayer(Player* player, uint64 guid, uint32 team);
+        void HandleAreaTrigger(Player* Source, uint32 Trigger);
         bool SetupBattleground();
-        virtual void Reset();
-        virtual void FillInitialWorldStates(WorldPacket &d);
-        void HandleKillPlayer(Player* player, Player *killer);
-        bool HandlePlayerUnderMap(Player * plr);
+        void Reset();
+        void FillInitialWorldStates(WorldPacket &d);
+        void HandleKillPlayer(Player* player, Player* killer);
+        bool HandlePlayerUnderMap(Player* player);
 
         /* Scorekeeping */
-        void UpdatePlayerScore(Player *Source, uint32 type, uint32 value, bool doAddHonor = true);
+        void UpdatePlayerScore(Player* Source, uint32 type, uint32 value, bool doAddHonor = true);
 };
 #endif

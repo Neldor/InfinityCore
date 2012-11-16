@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2011 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2012 TrinityCore <http://www.trinitycore.org/>
  * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -19,7 +19,8 @@
 #ifndef _AUTH_BIGNUMBER_H
 #define _AUTH_BIGNUMBER_H
 
-#include "Common.h"
+#include "Define.h"
+#include <ace/Mutex.h>
 
 struct bignum_st;
 
@@ -38,7 +39,7 @@ class BigNumber
 
         void SetRand(int numbits);
 
-        BigNumber operator=(const BigNumber &bn);
+        BigNumber& operator=(const BigNumber &bn);
 
         BigNumber operator+=(const BigNumber &bn);
         BigNumber operator+(const BigNumber &bn)
@@ -83,12 +84,16 @@ class BigNumber
         uint32 AsDword();
         uint8* AsByteArray(int minSize = 0, bool reverse = true);
 
-        const char *AsHexStr();
-        const char *AsDecStr();
+        char * AsHexStr() const;
+        char * AsDecStr() const;
 
     private:
         struct bignum_st *_bn;
         uint8 *_array;
+
+        // This mutex only controls thread-safe access to AsByteArray() and should be replaced with a thread-safe implementation of BigNumber
+        ACE_Mutex _lock;
+
 };
 #endif
 

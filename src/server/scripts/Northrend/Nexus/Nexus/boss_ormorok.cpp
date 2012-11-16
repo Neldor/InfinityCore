@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2011 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2012 TrinityCore <http://www.trinitycore.org/>
  * Copyright (C) 2006-2009 ScriptDev2 <https://scriptdev2.svn.sourceforge.net/>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -16,7 +16,8 @@
  * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "ScriptPCH.h"
+#include "ScriptMgr.h"
+#include "ScriptedCreature.h"
 #include "nexus.h"
 
 enum Spells
@@ -54,19 +55,19 @@ class boss_ormorok : public CreatureScript
 public:
     boss_ormorok() : CreatureScript("boss_ormorok") { }
 
-    CreatureAI* GetAI(Creature* pCreature) const
+    CreatureAI* GetAI(Creature* creature) const
     {
-        return new boss_ormorokAI (pCreature);
+        return new boss_ormorokAI (creature);
     }
 
     struct boss_ormorokAI : public ScriptedAI
     {
-        boss_ormorokAI(Creature *c) : ScriptedAI(c)
+        boss_ormorokAI(Creature* creature) : ScriptedAI(creature)
         {
-            pInstance = c->GetInstanceScript();
+            instance = creature->GetInstanceScript();
         }
 
-        InstanceScript* pInstance;
+        InstanceScript* instance;
 
         bool bFrenzy;
         bool bCrystalSpikes;
@@ -93,27 +94,27 @@ public:
             bFrenzy = false;
             bCrystalSpikes = false;
 
-            if (pInstance)
-                pInstance->SetData(DATA_ORMOROK_EVENT, NOT_STARTED);
+            if (instance)
+                instance->SetData(DATA_ORMOROK_EVENT, NOT_STARTED);
         }
 
         void EnterCombat(Unit* /*who*/)
         {
             DoScriptText(SAY_AGGRO, me);
 
-            if (pInstance)
-                pInstance->SetData(DATA_ORMOROK_EVENT, IN_PROGRESS);
+            if (instance)
+                instance->SetData(DATA_ORMOROK_EVENT, IN_PROGRESS);
         }
 
         void JustDied(Unit* /*killer*/)
         {
             DoScriptText(SAY_DEATH, me);
 
-            if (pInstance)
-                pInstance->SetData(DATA_ORMOROK_EVENT, DONE);
+            if (instance)
+                instance->SetData(DATA_ORMOROK_EVENT, DONE);
         }
 
-        void KilledUnit(Unit * /*victim*/)
+        void KilledUnit(Unit* /*victim*/)
         {
             DoScriptText(SAY_KILL, me);
         }
@@ -128,14 +129,14 @@ public:
             {
                 if (uiCrystalSpikesTimer2 <= diff)
                 {
-                    fSpikeXY[0][0] = fBaseX+(SPIKE_DISTANCE*uiCrystalSpikesCount*cos(fBaseO));
-                    fSpikeXY[0][1] = fBaseY+(SPIKE_DISTANCE*uiCrystalSpikesCount*sin(fBaseO));
-                    fSpikeXY[1][0] = fBaseX-(SPIKE_DISTANCE*uiCrystalSpikesCount*cos(fBaseO));
-                    fSpikeXY[1][1] = fBaseY-(SPIKE_DISTANCE*uiCrystalSpikesCount*sin(fBaseO));
-                    fSpikeXY[2][0] = fBaseX+(SPIKE_DISTANCE*uiCrystalSpikesCount*cos(fBaseO-(M_PI/2)));
-                    fSpikeXY[2][1] = fBaseY+(SPIKE_DISTANCE*uiCrystalSpikesCount*sin(fBaseO-(M_PI/2)));
-                    fSpikeXY[3][0] = fBaseX-(SPIKE_DISTANCE*uiCrystalSpikesCount*cos(fBaseO-(M_PI/2)));
-                    fSpikeXY[3][1] = fBaseY-(SPIKE_DISTANCE*uiCrystalSpikesCount*sin(fBaseO-(M_PI/2)));
+                    fSpikeXY[0][0] = fBaseX+(SPIKE_DISTANCE*uiCrystalSpikesCount* std::cos(fBaseO));
+                    fSpikeXY[0][1] = fBaseY+(SPIKE_DISTANCE*uiCrystalSpikesCount* std::sin(fBaseO));
+                    fSpikeXY[1][0] = fBaseX-(SPIKE_DISTANCE*uiCrystalSpikesCount* std::cos(fBaseO));
+                    fSpikeXY[1][1] = fBaseY-(SPIKE_DISTANCE*uiCrystalSpikesCount* std::sin(fBaseO));
+                    fSpikeXY[2][0] = fBaseX+(SPIKE_DISTANCE*uiCrystalSpikesCount* std::cos(fBaseO-(M_PI/2)));
+                    fSpikeXY[2][1] = fBaseY+(SPIKE_DISTANCE*uiCrystalSpikesCount* std::sin(fBaseO-(M_PI/2)));
+                    fSpikeXY[3][0] = fBaseX-(SPIKE_DISTANCE*uiCrystalSpikesCount* std::cos(fBaseO-(M_PI/2)));
+                    fSpikeXY[3][1] = fBaseY-(SPIKE_DISTANCE*uiCrystalSpikesCount* std::sin(fBaseO-(M_PI/2)));
                     for (uint8 i = 0; i < 4; ++i)
                         me->SummonCreature(MOB_CRYSTAL_SPIKE, fSpikeXY[i][0], fSpikeXY[i][1], fBaseZ, 0, TEMPSUMMON_TIMED_DESPAWN, 7*IN_MILLISECONDS);
                     if (++uiCrystalSpikesCount >= 13)
@@ -181,7 +182,7 @@ public:
                 Creature* Crystalline_Tangler = me->SummonCreature(MOB_CRYSTALLINE_TANGLER, me->GetPositionX(), me->GetPositionY(), me->GetPositionZ(), me->GetOrientation(), TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 1000);
                 if (Crystalline_Tangler)
                 {
-                    Unit *pTarget = NULL;
+                    Unit* target = NULL;
                     uint8 Healer = 0;
                     for (uint8 j = 1; j <= 4; j++)
                     {
@@ -195,22 +196,22 @@ public:
                         std::list<HostileReference*>::const_iterator i = me->getThreatManager().getThreatList().begin();
                         for (; i != me->getThreatManager().getThreatList().end(); ++i)
                         {
-                            Unit* pTemp = Unit::GetUnit((*me),(*i)->getUnitGuid());
-                            if (pTemp && pTemp->GetTypeId() == TYPEID_PLAYER && pTemp->getClass() == Healer)
+                            Unit* temp = Unit::GetUnit(*me, (*i)->getUnitGuid());
+                            if (temp && temp->GetTypeId() == TYPEID_PLAYER && temp->getClass() == Healer)
                             {
-                                pTarget = pTemp;
+                                target = temp;
                                 break;
                             }
                         }
-                        if (pTarget)
+                        if (target)
                             break;
                     }
-                    if (!pTarget)
-                        pTarget = SelectTarget(SELECT_TARGET_RANDOM, 0);
-                    if (pTarget)
+                    if (!target)
+                        target = SelectTarget(SELECT_TARGET_RANDOM, 0);
+                    if (target)
                     {
-                        Crystalline_Tangler->AI()->AttackStart(pTarget);
-                        Crystalline_Tangler->getThreatManager().addThreat(pTarget, 1000000000.0f);
+                        Crystalline_Tangler->AI()->AttackStart(target);
+                        Crystalline_Tangler->getThreatManager().addThreat(target, 1000000000.0f);
                     }
                 }
                 uiSummonCrystallineTanglerTimer = 17*IN_MILLISECONDS;
@@ -227,14 +228,14 @@ class mob_crystal_spike : public CreatureScript
 public:
     mob_crystal_spike() : CreatureScript("mob_crystal_spike") { }
 
-    CreatureAI* GetAI(Creature* pCreature) const
+    CreatureAI* GetAI(Creature* creature) const
     {
-        return new mob_crystal_spikeAI (pCreature);
+        return new mob_crystal_spikeAI (creature);
     }
 
     struct mob_crystal_spikeAI : public Scripted_NoMovementAI
     {
-        mob_crystal_spikeAI(Creature *c) : Scripted_NoMovementAI(c)
+        mob_crystal_spikeAI(Creature* creature) : Scripted_NoMovementAI(creature)
         {
         }
 
@@ -270,14 +271,14 @@ class mob_crystalline_tangler : public CreatureScript
 public:
     mob_crystalline_tangler() : CreatureScript("mob_crystalline_tangler") { }
 
-    CreatureAI* GetAI(Creature* pCreature) const
+    CreatureAI* GetAI(Creature* creature) const
     {
-        return new mob_crystalline_tanglerAI (pCreature);
+        return new mob_crystalline_tanglerAI (creature);
     }
 
     struct mob_crystalline_tanglerAI : public ScriptedAI
     {
-        mob_crystalline_tanglerAI(Creature *c) : ScriptedAI(c) {}
+        mob_crystalline_tanglerAI(Creature* creature) : ScriptedAI(creature) {}
 
         uint32 uiRootsTimer;
 
@@ -300,9 +301,6 @@ public:
     };
 
 };
-
-
-
 
 void AddSC_boss_ormorok()
 {

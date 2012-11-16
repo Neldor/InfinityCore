@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2011 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2012 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -15,7 +15,9 @@
  * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "ScriptPCH.h"
+#include "ScriptMgr.h"
+#include "ScriptedCreature.h"
+#include "SpellAuras.h"
 #include "vault_of_archavon.h"
 
 //Emalon spells
@@ -99,7 +101,7 @@ class boss_emalon : public CreatureScript
                 {
                     for (std::list<uint64>::const_iterator itr = summons.begin(); itr != summons.end(); ++itr)
                     {
-                        Creature *minion = Unit::GetCreature(*me, *itr);
+                        Creature* minion = Unit::GetCreature(*me, *itr);
                         if (minion && minion->isAlive() && !minion->getVictim() && minion->AI())
                             minion->AI()->AttackStart(who);
                     }
@@ -120,7 +122,7 @@ class boss_emalon : public CreatureScript
 
                 events.Update(diff);
 
-                if (me->HasUnitState(UNIT_STAT_CASTING))
+                if (me->HasUnitState(UNIT_STATE_CASTING))
                     return;
 
                 while (uint32 eventId = events.ExecuteEvent())
@@ -139,9 +141,7 @@ class boss_emalon : public CreatureScript
                         case EVENT_OVERCHARGE:
                             if (!summons.empty())
                             {
-                                std::list<uint64>::const_iterator itr = summons.begin();
-                                std::advance(itr, urand(0, summons.size()-1));
-                                Creature* minion = Unit::GetCreature(*me, *itr);
+                                Creature* minion = Unit::GetCreature(*me, Trinity::Containers::SelectRandomContainerElement(summons));
                                 if (minion && minion->isAlive())
                                 {
                                     minion->CastSpell(me, SPELL_OVERCHARGED, true);
@@ -191,7 +191,7 @@ class mob_tempest_minion : public CreatureScript
                 OverchargedTimer = 0;
             }
 
-            void JustDied(Unit* /*Killer*/)
+            void JustDied(Unit* /*killer*/)
             {
                 if (Creature* emalon = Unit::GetCreature(*me, instance ? instance->GetData64(DATA_EMALON) : 0))
                 {
@@ -203,12 +203,12 @@ class mob_tempest_minion : public CreatureScript
                 }
             }
 
-            void EnterCombat(Unit * who)
+            void EnterCombat(Unit* who)
             {
                 DoZoneInCombat();
                 events.ScheduleEvent(EVENT_SHOCK, 20000);
 
-                if (Creature *pEmalon = Unit::GetCreature(*me, instance ? instance->GetData64(DATA_EMALON) : 0))
+                if (Creature* pEmalon = Unit::GetCreature(*me, instance ? instance->GetData64(DATA_EMALON) : 0))
                 {
                     if (!pEmalon->getVictim() && pEmalon->AI())
                         pEmalon->AI()->AttackStart(who);
@@ -223,7 +223,7 @@ class mob_tempest_minion : public CreatureScript
 
                 events.Update(diff);
 
-                if (me->HasUnitState(UNIT_STAT_CASTING))
+                if (me->HasUnitState(UNIT_STATE_CASTING))
                     return;
 
                 if (Aura const* overchargedAura = me->GetAura(SPELL_OVERCHARGED))

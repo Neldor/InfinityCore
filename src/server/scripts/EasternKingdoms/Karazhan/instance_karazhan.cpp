@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2011 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2012 TrinityCore <http://www.trinitycore.org/>
  * Copyright (C) 2006-2009 ScriptDev2 <https://scriptdev2.svn.sourceforge.net/>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -23,7 +23,8 @@ SDComment: Instance Script for Karazhan to help in various encounters. TODO: Gam
 SDCategory: Karazhan
 EndScriptData */
 
-#include "ScriptPCH.h"
+#include "ScriptMgr.h"
+#include "InstanceScript.h"
 #include "karazhan.h"
 
 #define MAX_ENCOUNTER      12
@@ -48,14 +49,14 @@ class instance_karazhan : public InstanceMapScript
 public:
     instance_karazhan() : InstanceMapScript("instance_karazhan", 532) { }
 
-    InstanceScript* GetInstanceScript(InstanceMap* pMap) const
+    InstanceScript* GetInstanceScript(InstanceMap* map) const
     {
-        return new instance_karazhan_InstanceMapScript(pMap);
+        return new instance_karazhan_InstanceMapScript(map);
     }
 
     struct instance_karazhan_InstanceMapScript : public InstanceScript
     {
-        instance_karazhan_InstanceMapScript(Map* pMap) : InstanceScript(pMap) {Initialize();}
+        instance_karazhan_InstanceMapScript(Map* map) : InstanceScript(map) {}
 
         uint32 m_auiEncounter[MAX_ENCOUNTER];
         std::string strSaveData;
@@ -84,7 +85,7 @@ public:
             memset(&m_auiEncounter, 0, sizeof(m_auiEncounter));
 
             // 1 - OZ, 2 - HOOD, 3 - RAJ, this never gets altered.
-            m_uiOperaEvent      = urand(1,3);
+            m_uiOperaEvent      = urand(1, 3);
             m_uiOzDeathCount    = 0;
 
             m_uiCurtainGUID         = 0;
@@ -149,7 +150,7 @@ public:
                 case TYPE_NETHERSPITE:          m_auiEncounter[8] = uiData; break;
                 case TYPE_CHESS:
                     if (uiData == DONE)
-                        DoRespawnGameObject(DustCoveredChest,DAY);
+                        DoRespawnGameObject(DustCoveredChest, DAY);
                     m_auiEncounter[9]  = uiData;
                     break;
                 case TYPE_MALCHEZZAR:           m_auiEncounter[10] = uiData; break;
@@ -170,9 +171,9 @@ public:
                 OUT_SAVE_INST_DATA;
 
                 std::ostringstream saveStream;
-                saveStream << m_auiEncounter[0] << " " << m_auiEncounter[1] << " " << m_auiEncounter[2] << " "
-                    << m_auiEncounter[3] << " " << m_auiEncounter[4] << " " << m_auiEncounter[5] << " " << m_auiEncounter[6] << " "
-                    << m_auiEncounter[7] << " " << m_auiEncounter[8] << " " << m_auiEncounter[9] << " " << m_auiEncounter[10] << " " << m_auiEncounter[11];
+                saveStream << m_auiEncounter[0] << ' ' << m_auiEncounter[1] << ' ' << m_auiEncounter[2] << ' '
+                    << m_auiEncounter[3] << ' ' << m_auiEncounter[4] << ' ' << m_auiEncounter[5] << ' ' << m_auiEncounter[6] << ' '
+                    << m_auiEncounter[7] << ' ' << m_auiEncounter[8] << ' ' << m_auiEncounter[9] << ' ' << m_auiEncounter[10] << ' ' << m_auiEncounter[11];
 
                 strSaveData = saveStream.str();
 
@@ -183,7 +184,7 @@ public:
 
          void SetData64(uint32 identifier, uint64 data)
          {
-             switch(identifier)
+             switch (identifier)
              {
              case DATA_IMAGE_OF_MEDIVH: ImageGUID = data;
              }
@@ -191,7 +192,7 @@ public:
 
         void OnGameObjectCreate(GameObject* go)
         {
-            switch(go->GetEntry())
+            switch (go->GetEntry())
             {
                 case 183932:   m_uiCurtainGUID          = go->GetGUID();         break;
                 case 184278:
@@ -221,7 +222,7 @@ public:
                 case 185119: DustCoveredChest = go->GetGUID(); break;
             }
 
-            switch(m_uiOperaEvent)
+            switch (m_uiOperaEvent)
             {
                 //TODO: Set Object visibilities for Opera based on performance
                 case EVENT_OZ:
@@ -287,7 +288,7 @@ public:
             return 0;
         }
 
-        void Load(const char* chrIn)
+        void Load(char const* chrIn)
         {
             if (!chrIn)
             {
@@ -307,9 +308,7 @@ public:
             OUT_LOAD_INST_DATA_COMPLETE;
         }
     };
-
 };
-
 
 void AddSC_instance_karazhan()
 {

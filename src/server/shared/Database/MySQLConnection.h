@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2011 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2012 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -33,6 +33,7 @@ enum ConnectionFlags
 {
     CONNECTION_ASYNC = 0x1,
     CONNECTION_SYNCH = 0x2,
+    CONNECTION_BOTH = CONNECTION_ASYNC | CONNECTION_SYNCH
 };
 
 struct MySQLConnectionInfo
@@ -40,7 +41,7 @@ struct MySQLConnectionInfo
     MySQLConnectionInfo() {}
     MySQLConnectionInfo(const std::string& infoString)
     {
-        Tokens tokens(infoString, ';');
+        Tokenizer tokens(infoString, ';');
 
         if (tokens.size() != 5)
             return;
@@ -61,13 +62,6 @@ struct MySQLConnectionInfo
     std::string port_or_socket;
 };
 
-struct PreparedStatementTable
-{
-    uint32 index;
-    const char* query;
-    ConnectionFlags type;
-};
-
 typedef std::map<uint32 /*index*/, std::pair<const char* /*query*/, ConnectionFlags /*sync/async*/> > PreparedStatementMap;
 
 #define PREPARE_STATEMENT(a, b, c) m_queries[a] = std::make_pair(strdup(b), c);
@@ -80,7 +74,7 @@ class MySQLConnection
     public:
         MySQLConnection(MySQLConnectionInfo& connInfo);                               //! Constructor for synchronous connections.
         MySQLConnection(ACE_Activation_Queue* queue, MySQLConnectionInfo& connInfo);  //! Constructor for asynchronous connections.
-        ~MySQLConnection();
+        virtual ~MySQLConnection();
 
         virtual bool Open();
         void Close();
@@ -121,10 +115,14 @@ class MySQLConnection
         MySQLPreparedStatement* GetPreparedStatement(uint32 index);
         void PrepareStatement(uint32 index, const char* sql, ConnectionFlags flags);
 
+        bool PrepareStatements();
+        virtual void DoPrepareStatements() = 0;
+
     protected:
         std::vector<MySQLPreparedStatement*> m_stmts;         //! PreparedStatements storage
         PreparedStatementMap                 m_queries;       //! Query storage
         bool                                 m_reconnecting;  //! Are we reconnecting?
+        bool                                 m_prepareError;  //! Was there any error while preparing statements?
 
     private:
         bool _HandleMySQLErrno(uint32 errNo);

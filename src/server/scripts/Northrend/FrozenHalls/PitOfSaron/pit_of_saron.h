@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2011 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2012 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -23,12 +23,14 @@
 
 enum DataTypes
 {
+    // Encounter states and GUIDs
     DATA_GARFROST           = 0,
-    DATA_KRICK              = 1,
-    DATA_ICK                = 2,
-    DATA_TYRANNUS           = 3,
-    DATA_RIMEFANG           = 4,
+    DATA_ICK                = 1,
+    DATA_TYRANNUS           = 2,
 
+    // GUIDs
+    DATA_RIMEFANG           = 3,
+    DATA_KRICK              = 4,
     DATA_JAINA_SYLVANAS_1   = 5,    // GUID of either Jaina or Sylvanas part 1, depending on team, as it's the same spawn.
     DATA_JAINA_SYLVANAS_2   = 6,    // GUID of either Jaina or Sylvanas part 2, depending on team, as it's the same spawn.
     DATA_TYRANNUS_EVENT     = 7,
@@ -88,6 +90,8 @@ enum CreatureIds
 enum GameObjectIds
 {
     GO_SARONITE_ROCK                            = 196485,
+    GO_ICE_WALL                                 = 201885,
+    GO_HALLS_OF_REFLECTION_PORTCULLIS           = 201848,
 };
 
 #endif

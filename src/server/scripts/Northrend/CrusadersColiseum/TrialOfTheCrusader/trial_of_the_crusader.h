@@ -22,8 +22,6 @@ enum
     TYPE_EVENT_NPC              = 102,
     TYPE_NORTHREND_BEASTS       = 103,
 
-    DATA_HEALTH_TWIN_SHARED     = 201,
-
     DATA_SNOBOLD_COUNT                   = 301,
     DATA_MISTRESS_OF_PAIN_COUNT          = 302,
     DATA_TRIBUTE_TO_IMMORTALITY_ELEGIBLE = 303,
@@ -37,6 +35,13 @@ enum
     DESPAWN_TIME                = 300000,
 };
 
+const Position ToCSpawnLoc[]=
+{
+    {563.912f, 261.625f, 394.73f, 4.70437f},  //  0 Center
+    {575.451f, 261.496f, 394.73f,  4.6541f},  //  1 Left
+    {549.951f,  261.55f, 394.73f, 4.74835f},  //  2 Right
+};
+
 const Position ToCCommonLoc[]=
 {
     {559.257996f, 90.266197f, 395.122986f, 0},  //  0 Barrent
@@ -48,8 +53,8 @@ const Position ToCCommonLoc[]=
     {563.833008f, 195.244995f, 394.585561f, 0}, //  5 - Center
     {573.5f, 180.5f, 395.14f, 0},               //  6 Move 0 Right
     {553.5f, 180.5f, 395.14f, 0},               //  7 Move 0 Left
-    {585.5f, 170.0f, 395.14f, 0},               //  8 Move 1 Right
-    {545.5f, 170.0f, 395.14f, 0},               //  9 Move 1 Left
+    {573.0f, 170.0f, 395.14f, 0},               //  8 Move 1 Right
+    {555.5f, 170.0f, 395.14f, 0},               //  9 Move 1 Left
     {563.8f, 216.1f, 395.1f, 0},                // 10 Behind the door
 
     {575.042358f, 195.260727f, 395.137146f, 0}, // 5
@@ -124,6 +129,13 @@ const Position AnubarakLoc[]=
     {740.184509f, 193.443390f, 142.117584f, 0},  // 4 - Nerub Spawn
 };
 
+const Position EndSpawnLoc[]=
+{
+    {648.9167f, 131.0208f, 141.6161f, 0}, // 0 - Highlord Tirion Fordring
+    {649.1614f, 142.0399f, 141.3057f ,0}, // 1 - Argent Mage
+    {644.6250f, 149.2743f, 140.6015f ,0}, // 2 - Portal to Dalaran
+};
+
 enum euiWorldStates
 {
     UPDATE_STATE_UI_SHOW            = 4390,
@@ -157,6 +169,8 @@ enum eCreature
 {
     NPC_BARRENT                 = 34816,
     NPC_TIRION                  = 34996,
+    NPC_TIRION_FORDRING         = 36095,
+    NPC_ARGENT_MAGE             = 36097,
     NPC_FIZZLEBANG              = 35458,
     NPC_GARROSH                 = 34995,
     NPC_VARIAN                  = 34990,
@@ -210,6 +224,9 @@ enum eCreature
     NPC_LIGHTBANE               = 34497,
     NPC_DARKBANE                = 34496,
 
+    NPC_DARK_ESSENCE            = 34567,
+    NPC_LIGHT_ESSENCE           = 34568,
+
     NPC_ANUBARAK                = 34564,
 };
 
@@ -236,6 +253,7 @@ enum eGameObject
     GO_MAIN_GATE_DOOR           = 195647,
     GO_EAST_PORTCULLIS          = 195648,
     GO_WEB_DOOR                 = 195485,
+    GO_PORTAL_TO_DALARAN        = 195682,
 };
 
 enum eAchievementData

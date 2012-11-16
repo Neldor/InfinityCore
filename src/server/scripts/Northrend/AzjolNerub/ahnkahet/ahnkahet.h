@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2011 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2012 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -44,7 +44,6 @@ enum Data
     DATA_SPHERE2_EVENT,
     DATA_JEDOGA_TRIGGER_SWITCH,
     DATA_JEDOGA_RESET_INITIANDS,
-    DATA_INITIAND_KILLED,
     DATA_ALL_INITIAND_DEAD
 };
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2011 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2012 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -20,6 +20,10 @@
 
 #include "SQLOperation.h"
 #include <ace/Future.h>
+
+#ifdef __APPLE__
+#undef TYPE_BOOL
+#endif
 
 //- Union for data buffer (upper-level bind -> queue -> lower-level bind)
 union PreparedStatementDataUnion
@@ -75,7 +79,7 @@ class PreparedStatement
         explicit PreparedStatement(uint32 index);
         ~PreparedStatement();
 
-        void setBool(const uint8 index,const bool value);
+        void setBool(const uint8 index, const bool value);
         void setUInt8(const uint8 index, const uint8 value);
         void setUInt16(const uint8 index, const uint16 value);
         void setUInt32(const uint8 index, const uint32 value);
@@ -109,7 +113,7 @@ class MySQLPreparedStatement
         MySQLPreparedStatement(MYSQL_STMT* stmt);
         ~MySQLPreparedStatement();
 
-        void setBool(const uint8 index,const bool value);
+        void setBool(const uint8 index, const bool value);
         void setUInt8(const uint8 index, const uint8 value);
         void setUInt16(const uint8 index, const uint16 value);
         void setUInt32(const uint8 index, const uint32 value);

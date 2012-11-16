@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2011 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2012 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -19,7 +19,8 @@
  * Comment: The event with the Living Mojos is not implemented, just is done that when one of the mojos around the boss take damage will make the boss enter in combat!
  */
 
-#include "ScriptPCH.h"
+#include "ScriptMgr.h"
+#include "ScriptedCreature.h"
 #include "gundrak.h"
 
 enum Spells
@@ -97,15 +98,14 @@ class boss_drakkari_colossus : public CreatureScript
                 if (GetData(DATA_INTRO_DONE))
                 {
                     me->SetReactState(REACT_AGGRESSIVE);
-                    me->RemoveFlag(UNIT_FIELD_FLAGS,UNIT_FLAG_OOC_NOT_ATTACKABLE);
+                    me->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_IMMUNE_TO_PC);
                     me->RemoveAura(SPELL_FREEZE_ANIM);
                 }
 
                 //events.Reset(); -> done in _Reset();
-                events.ScheduleEvent(EVENT_MIGHTY_BLOW, urand(10000,30000));
+                events.ScheduleEvent(EVENT_MIGHTY_BLOW, urand(10000, 30000));
 
                 phase = COLOSSUS_PHASE_NORMAL;
-
 
                 // Note: This should not be called, but before use SetBossState function we should use BossAI
                 //        in all the bosses of the instance
@@ -150,8 +150,8 @@ class boss_drakkari_colossus : public CreatureScript
                         me->GetMotionMaster()->MoveIdle();
 
                         me->SetReactState(REACT_PASSIVE);
-                        me->SetFlag(UNIT_FIELD_FLAGS,UNIT_FLAG_OOC_NOT_ATTACKABLE);
-                        DoCast(me,SPELL_FREEZE_ANIM);
+                        me->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_IMMUNE_TO_PC);
+                        DoCast(me, SPELL_FREEZE_ANIM);
                         break;
                     case ACTION_UNFREEZE_COLOSSUS:
 
@@ -159,13 +159,13 @@ class boss_drakkari_colossus : public CreatureScript
                             return;
 
                         me->SetReactState(REACT_AGGRESSIVE);
-                        me->RemoveFlag(UNIT_FIELD_FLAGS,UNIT_FLAG_OOC_NOT_ATTACKABLE);
+                        me->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_IMMUNE_TO_PC);
                         me->RemoveAura(SPELL_FREEZE_ANIM);
 
                         me->SetInCombatWithZone();
 
                         if (me->getVictim())
-                            me->GetMotionMaster()->MoveChase(me->getVictim(), 0,0);
+                            me->GetMotionMaster()->MoveChase(me->getVictim(), 0, 0);
 
                         break;
                 }
@@ -173,7 +173,7 @@ class boss_drakkari_colossus : public CreatureScript
 
             void DamageTaken(Unit* /*attacker*/, uint32& damage)
             {
-                if (me->HasFlag(UNIT_FIELD_FLAGS,UNIT_FLAG_OOC_NOT_ATTACKABLE))
+                if (me->HasFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_IMMUNE_TO_PC))
                     damage = 0;
 
                 if (phase == COLOSSUS_PHASE_NORMAL ||
@@ -213,7 +213,7 @@ class boss_drakkari_colossus : public CreatureScript
 
                 events.Update(diff);
 
-                if (me->HasUnitState(UNIT_STAT_CASTING))
+                if (me->HasUnitState(UNIT_STATE_CASTING))
                     return;
 
                 while (uint32 eventId = events.ExecuteEvent())
@@ -221,8 +221,8 @@ class boss_drakkari_colossus : public CreatureScript
                     switch (eventId)
                     {
                         case EVENT_MIGHTY_BLOW:
-                            DoCast(me->getVictim(),SPELL_MIGHTY_BLOW);
-                            events.ScheduleEvent(EVENT_MIGHTY_BLOW, urand(5000,15000));
+                            DoCast(me->getVictim(), SPELL_MIGHTY_BLOW);
+                            events.ScheduleEvent(EVENT_MIGHTY_BLOW, urand(5000, 15000));
                             break;
                     }
                 }
@@ -259,16 +259,16 @@ class boss_drakkari_elemental : public CreatureScript
         {
             boss_drakkari_elementalAI(Creature* creature) : ScriptedAI(creature)
             {
-                DoCast(me,SPELL_ELEMENTAL_SPAWN_EFFECT);
+                DoCast(me, SPELL_ELEMENTAL_SPAWN_EFFECT);
                 instance = creature->GetInstanceScript();
             }
 
             void Reset()
             {
                 events.Reset();
-                events.ScheduleEvent(EVENT_SURGE,urand(5000,15000));
+                events.ScheduleEvent(EVENT_SURGE, urand(5000, 15000));
 
-                me->AddAura(SPELL_MOJO_VOLLEY,me);
+                me->AddAura(SPELL_MOJO_VOLLEY, me);
             }
 
             void JustDied(Unit* killer)
@@ -290,7 +290,7 @@ class boss_drakkari_elemental : public CreatureScript
 
                 events.Update(diff);
 
-                if (me->HasUnitState(UNIT_STAT_CASTING))
+                if (me->HasUnitState(UNIT_STATE_CASTING))
                     return;
 
                 while (uint32 eventId = events.ExecuteEvent())
@@ -300,8 +300,8 @@ class boss_drakkari_elemental : public CreatureScript
                         case EVENT_SURGE:
                             DoCast(SPELL_SURGE_VISUAL);
                             if (Unit* target = SelectTarget(SELECT_TARGET_RANDOM, 1, 0.0f, true))
-                                DoCast(target,SPELL_SURGE);
-                            events.ScheduleEvent(EVENT_SURGE,urand(5000,15000));
+                                DoCast(target, SPELL_SURGE);
+                            events.ScheduleEvent(EVENT_SURGE, urand(5000, 15000));
                             break;
                     }
                 }
@@ -319,7 +319,7 @@ class boss_drakkari_elemental : public CreatureScript
                         {
                             if (Creature* colossus = Unit::GetCreature(*me, instance->GetData64(DATA_DRAKKARI_COLOSSUS)))
                                 // what if the elemental is more than 80 yards from drakkari colossus ?
-                                DoCast(colossus,SPELL_MERGE,true);
+                                DoCast(colossus, SPELL_MERGE, true);
                         }
                         break;
                 }
@@ -336,7 +336,7 @@ class boss_drakkari_elemental : public CreatureScript
                             damage = 0;
 
                             // to prevent spell spaming
-                            if (me->HasUnitState(UNIT_STAT_CHARGING))
+                            if (me->HasUnitState(UNIT_STATE_CHARGING))
                                 return;
 
                             // not sure about this, the idea of this code is to prevent bug the elemental
@@ -346,7 +346,7 @@ class boss_drakkari_elemental : public CreatureScript
                                 if (me->GetMotionMaster()->GetCurrentMovementGeneratorType() == POINT_MOTION_TYPE)
                                     return;
 
-                                me->GetMotionMaster()->MovePoint(0,colossus->GetPositionX(),colossus->GetPositionY(),colossus->GetPositionZ());
+                                me->GetMotionMaster()->MovePoint(0, colossus->GetPositionX(), colossus->GetPositionY(), colossus->GetPositionZ());
                                 return;
                             }*/
                             DoAction(ACTION_RETURN_TO_COLOSSUS);
@@ -360,7 +360,7 @@ class boss_drakkari_elemental : public CreatureScript
                 me->DespawnOrUnsummon();
             }
 
-            void SpellHitTarget(Unit* target, SpellEntry const* spell)
+            void SpellHitTarget(Unit* target, SpellInfo const* spell)
             {
                 if (spell->Id == SPELL_MERGE)
                 {
@@ -388,9 +388,9 @@ class npc_living_mojo : public CreatureScript
 public:
     npc_living_mojo() : CreatureScript("npc_living_mojo") { }
 
-    CreatureAI* GetAI(Creature* pCreature) const
+    CreatureAI* GetAI(Creature* creature) const
     {
-        return new npc_living_mojoAI (pCreature);
+        return new npc_living_mojoAI (creature);
     }
 
     struct npc_living_mojoAI : public ScriptedAI
@@ -409,13 +409,13 @@ public:
         void MoveMojos(Creature* boss)
         {
             std::list<Creature*> mojosList;
-            boss->GetCreatureListWithEntryInGrid(mojosList,me->GetEntry(),12.0f);
+            boss->GetCreatureListWithEntryInGrid(mojosList, me->GetEntry(), 12.0f);
             if (!mojosList.empty())
             {
                 for (std::list<Creature*>::const_iterator itr = mojosList.begin(); itr != mojosList.end(); ++itr)
                 {
                     if (Creature* mojo = *itr)
-                        mojo->GetMotionMaster()->MovePoint(1,boss->GetHomePosition().GetPositionX(),boss->GetHomePosition().GetPositionY(),boss->GetHomePosition().GetPositionZ());
+                        mojo->GetMotionMaster()->MovePoint(1, boss->GetHomePosition().GetPositionX(), boss->GetHomePosition().GetPositionY(), boss->GetHomePosition().GetPositionZ());
                 }
             }
         }
@@ -431,13 +431,12 @@ public:
                 {
                     colossus->AI()->DoAction(ACTION_UNFREEZE_COLOSSUS);
                     if (!colossus->AI()->GetData(DATA_INTRO_DONE))
-                        colossus->AI()->SetData(DATA_INTRO_DONE,true);
+                        colossus->AI()->SetData(DATA_INTRO_DONE, true);
                     colossus->SetInCombatWithZone();
                     me->DespawnOrUnsummon();
                 }
             }
         }
-
 
         void AttackStart(Unit* attacker)
         {
@@ -453,7 +452,7 @@ public:
                 Position colossusHomePosition;
                 colossus->GetHomePosition().GetPosition(&colossusHomePosition);
 
-                float distance = homePosition.GetExactDist(colossusHomePosition.GetPositionX(),colossusHomePosition.GetPositionY(),colossusHomePosition.GetPositionZ());
+                float distance = homePosition.GetExactDist(colossusHomePosition.GetPositionX(), colossusHomePosition.GetPositionY(), colossusHomePosition.GetPositionZ());
 
                 if (distance < 12.0f)
                 {

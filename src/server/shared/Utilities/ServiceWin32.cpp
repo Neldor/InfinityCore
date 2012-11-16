@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2011 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2012 TrinityCore <http://www.trinitycore.org/>
  * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -52,8 +52,6 @@ typedef WINADVAPI BOOL (WINAPI *CSD_T)(SC_HANDLE, DWORD, LPCVOID);
 
 bool WinServiceInstall()
 {
-    CSD_T ChangeService_Config2;
-    HMODULE advapi32;
     SC_HANDLE serviceControlManager = OpenSCManager(0, 0, SC_MANAGER_CREATE_SERVICE);
 
     if (serviceControlManager)
@@ -79,15 +77,15 @@ bool WinServiceInstall()
                 0);                                         // no password
             if (service)
             {
-                advapi32 = GetModuleHandle("ADVAPI32.DLL");
-                if(!advapi32)
+                HMODULE advapi32 = GetModuleHandle("ADVAPI32.DLL");
+                if (!advapi32)
                 {
                     CloseServiceHandle(service);
                     CloseServiceHandle(serviceControlManager);
                     return false;
                 }
 
-                ChangeService_Config2 = (CSD_T) GetProcAddress(advapi32, "ChangeServiceConfig2A");
+                CSD_T ChangeService_Config2 = (CSD_T) GetProcAddress(advapi32, "ChangeServiceConfig2A");
                 if (!ChangeService_Config2)
                 {
                     CloseServiceHandle(service);
@@ -232,7 +230,7 @@ void WINAPI ServiceMain(DWORD argc, char *argv[])
 
         m_ServiceStatus = 1;
         argc = 1;
-        main(argc , argv);
+        main(argc, argv);
 
         // service was stopped
         serviceStatus.dwCurrentState = SERVICE_STOP_PENDING;
@@ -257,7 +255,7 @@ bool WinServiceRun()
 
     if (!StartServiceCtrlDispatcher(serviceTable))
     {
-        sLog->outError("StartService Failed. Error [%u]", ::GetLastError());
+        sLog->outError(LOG_FILTER_GENERAL, "StartService Failed. Error [%u]", ::GetLastError());
         return false;
     }
     return true;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2011 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2012 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -15,7 +15,8 @@
  * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "ScriptPCH.h"
+#include "ScriptMgr.h"
+#include "ScriptedCreature.h"
 #include "ulduar.h"
 
 enum Yells
@@ -45,14 +46,14 @@ class boss_thorim : public CreatureScript
 public:
     boss_thorim() : CreatureScript("boss_thorim") { }
 
-    CreatureAI* GetAI(Creature* pCreature) const
+    CreatureAI* GetAI(Creature* creature) const
     {
-        return new boss_thorimAI(pCreature);
+        return GetUlduarAI<boss_thorimAI>(creature);
     }
 
     struct boss_thorimAI : public BossAI
     {
-        boss_thorimAI(Creature* pCreature) : BossAI(pCreature, TYPE_THORIM)
+        boss_thorimAI(Creature* creature) : BossAI(creature, BOSS_THORIM)
         {
         }
 
@@ -67,20 +68,20 @@ public:
             _EnterEvadeMode();
         }
 
-        void KilledUnit(Unit * /*victim*/)
+        void KilledUnit(Unit* /*victim*/)
         {
-            DoScriptText(RAND(SAY_SLAY_1,SAY_SLAY_2), me);
+            DoScriptText(RAND(SAY_SLAY_1, SAY_SLAY_2), me);
         }
 
-        void JustDied(Unit * /*victim*/)
+        void JustDied(Unit* /*killer*/)
         {
             DoScriptText(SAY_DEATH, me);
             _JustDied();
         }
 
-        void EnterCombat(Unit* /*pWho*/)
+        void EnterCombat(Unit* /*who*/)
         {
-            DoScriptText(RAND(SAY_AGGRO_1,SAY_AGGRO_2), me);
+            DoScriptText(RAND(SAY_AGGRO_1, SAY_AGGRO_2), me);
             _EnterCombat();
         }
 
@@ -98,7 +99,6 @@ public:
     };
 
 };
-
 
 void AddSC_boss_thorim()
 {

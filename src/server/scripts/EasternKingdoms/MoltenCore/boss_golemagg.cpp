@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2011 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2012 TrinityCore <http://www.trinitycore.org/>
  * Copyright (C) 2006-2009 ScriptDev2 <https://scriptdev2.svn.sourceforge.net/>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -77,7 +77,7 @@ class boss_golemagg : public CreatureScript
 
             void DamageTaken(Unit* /*attacker*/, uint32& /*damage*/)
             {
-                if (HealthBelowPct(10) || me->HasAura(SPELL_ENRAGE))
+                if (!HealthBelowPct(10) || me->HasAura(SPELL_ENRAGE))
                     return;
 
                 DoCast(me, SPELL_ENRAGE, true);
@@ -91,7 +91,7 @@ class boss_golemagg : public CreatureScript
 
                 events.Update(diff);
 
-                if (me->HasUnitState(UNIT_STAT_CASTING))
+                if (me->HasUnitState(UNIT_STATE_CASTING))
                     return;
 
                 while (uint32 eventId = events.ExecuteEvent())
@@ -99,8 +99,8 @@ class boss_golemagg : public CreatureScript
                     switch (eventId)
                     {
                         case EVENT_PYROBLAST:
-                            if (Unit* pTarget = SelectTarget(SELECT_TARGET_RANDOM, 0))
-                                DoCast(pTarget, SPELL_PYROBLAST);
+                            if (Unit* target = SelectTarget(SELECT_TARGET_RANDOM, 0))
+                                DoCast(target, SPELL_PYROBLAST);
                             events.ScheduleEvent(EVENT_PYROBLAST, 7000);
                             break;
                         case EVENT_EARTHQUAKE:

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2011 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2012 TrinityCore <http://www.trinitycore.org/>
  * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -30,11 +30,11 @@ class WorldPacket;
 
 enum FriendStatus
 {
-    FRIEND_STATUS_OFFLINE   = 0,
-    FRIEND_STATUS_ONLINE    = 1,
-    FRIEND_STATUS_AFK       = 2,
-    FRIEND_STATUS_UNK3      = 3,
-    FRIEND_STATUS_DND       = 4
+    FRIEND_STATUS_OFFLINE   = 0x00,
+    FRIEND_STATUS_ONLINE    = 0x01,
+    FRIEND_STATUS_AFK       = 0x02,
+    FRIEND_STATUS_DND       = 0x04,
+    FRIEND_STATUS_RAF       = 0x08
 };
 
 enum SocialFlag
@@ -48,31 +48,17 @@ enum SocialFlag
 struct FriendInfo
 {
     FriendStatus Status;
-    uint32 Flags;
+    uint8 Flags;
     uint32 Area;
     uint8 Level;
     uint8 Class;
     std::string Note;
 
-    FriendInfo()
-    {
-        Status = FRIEND_STATUS_OFFLINE;
-        Flags = 0;
-        Area = 0;
-        Level = 0;
-        Class = 0;
-        Note = "";
-    }
+    FriendInfo() : Status(FRIEND_STATUS_OFFLINE), Flags(0), Area(0), Level(0), Class(0), Note()
+    { }
 
-    FriendInfo(uint32 flags, const std::string& note)
-    {
-        Status = FRIEND_STATUS_OFFLINE;
-        Flags = flags;
-        Area = 0;
-        Level = 0;
-        Class = 0;
-        Note = note;
-    }
+    FriendInfo(uint8 flags, std::string const& note) : Status(FRIEND_STATUS_OFFLINE), Flags(flags), Area(0), Level(0), Class(0), Note(note)
+    { }
 };
 
 typedef std::map<uint32, FriendInfo> PlayerSocialMap;
@@ -122,9 +108,9 @@ class PlayerSocial
         // adding/removing
         bool AddToSocialList(uint32 friend_guid, bool ignore);
         void RemoveFromSocialList(uint32 friend_guid, bool ignore);
-        void SetFriendNote(uint32 friend_guid, std::string note);
+        void SetFriendNote(uint32 friendGuid, std::string note);
         // Packet send's
-        void SendSocialList(Player* plr);
+        void SendSocialList(Player* player);
         // Misc
         bool HasFriend(uint32 friend_guid);
         bool HasIgnore(uint32 ignore_guid);
@@ -139,17 +125,20 @@ class PlayerSocial
 class SocialMgr
 {
     friend class ACE_Singleton<SocialMgr, ACE_Null_Mutex>;
-    SocialMgr();
-    public:
+
+    private:
+        SocialMgr();
         ~SocialMgr();
+
+    public:
         // Misc
         void RemovePlayerSocial(uint32 guid) { m_socialMap.erase(guid); }
 
-        void GetFriendInfo(Player *player, uint32 friendGUID, FriendInfo &friendInfo);
+        void GetFriendInfo(Player* player, uint32 friendGUID, FriendInfo &friendInfo);
         // Packet management
-        void MakeFriendStatusPacket(FriendsResult result, uint32 friend_guid, WorldPacket *data);
-        void SendFriendStatus(Player *player, FriendsResult result, uint32 friend_guid, bool broadcast);
-        void BroadcastToFriendListers(Player *player, WorldPacket *packet);
+        void MakeFriendStatusPacket(FriendsResult result, uint32 friend_guid, WorldPacket* data);
+        void SendFriendStatus(Player* player, FriendsResult result, uint32 friend_guid, bool broadcast);
+        void BroadcastToFriendListers(Player* player, WorldPacket* packet);
         // Loading
         PlayerSocial *LoadFromDB(PreparedQueryResult result, uint32 guid);
     private:
@@ -158,4 +147,3 @@ class SocialMgr
 
 #define sSocialMgr ACE_Singleton<SocialMgr, ACE_Null_Mutex>::instance()
 #endif
-

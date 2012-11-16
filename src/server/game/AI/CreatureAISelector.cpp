@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2011 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2012 TrinityCore <http://www.trinitycore.org/>
  * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -28,9 +28,9 @@
 
 namespace FactorySelector
 {
-    CreatureAI* selectAI(Creature *creature)
+    CreatureAI* selectAI(Creature* creature)
     {
-        const CreatureAICreator *ai_factory = NULL;
+        const CreatureAICreator* ai_factory = NULL;
         CreatureAIRegistry& ai_registry(*CreatureAIRepository::instance());
 
         if (creature->isPet())
@@ -44,7 +44,7 @@ namespace FactorySelector
         // AIname in db
         std::string ainame=creature->GetAIName();
         if (!ai_factory && !ainame.empty())
-            ai_factory = ai_registry.GetRegistryItem(ainame.c_str());
+            ai_factory = ai_registry.GetRegistryItem(ainame);
 
         // select by NPC flags
         if (!ai_factory)
@@ -77,12 +77,12 @@ namespace FactorySelector
         {
             int best_val = -1;
             typedef CreatureAIRegistry::RegistryMapType RMT;
-            RMT const &l = ai_registry.GetRegisteredItems();
+            RMT const& l = ai_registry.GetRegisteredItems();
             for (RMT::const_iterator iter = l.begin(); iter != l.end(); ++iter)
             {
-                const CreatureAICreator *factory = iter->second;
-                const SelectableAI *p = dynamic_cast<const SelectableAI *>(factory);
-                ASSERT(p != NULL);
+                const CreatureAICreator* factory = iter->second;
+                const SelectableAI* p = dynamic_cast<const SelectableAI*>(factory);
+                ASSERT(p);
                 int val = p->Permit(creature);
                 if (val > best_val)
                 {
@@ -99,11 +99,11 @@ namespace FactorySelector
         return (ai_factory == NULL ? new NullCreatureAI(creature) : ai_factory->Create(creature));
     }
 
-    MovementGenerator* selectMovementGenerator(Creature *creature)
+    MovementGenerator* selectMovementGenerator(Creature* creature)
     {
         MovementGeneratorRegistry& mv_registry(*MovementGeneratorRepository::instance());
-        ASSERT(creature->GetCreatureInfo() != NULL);
-        const MovementGeneratorCreator *mv_factory = mv_registry.GetRegistryItem(creature->GetDefaultMovementType());
+        ASSERT(creature->GetCreatureTemplate());
+        const MovementGeneratorCreator* mv_factory = mv_registry.GetRegistryItem(creature->GetDefaultMovementType());
 
         /* if (mv_factory == NULL)
         {
@@ -125,15 +125,22 @@ namespace FactorySelector
         }*/
 
         return (mv_factory == NULL ? NULL : mv_factory->Create(creature));
-
     }
 
-    GameObjectAI* SelectGameObjectAI(GameObject *go)
+    GameObjectAI* SelectGameObjectAI(GameObject* go)
     {
-        const GameObjectAICreator *ai_factory = NULL;
+        const GameObjectAICreator* ai_factory = NULL;
         GameObjectAIRegistry& ai_registry(*GameObjectAIRepository::instance());
 
+        if (GameObjectAI* scriptedAI = sScriptMgr->GetGameObjectAI(go))
+            return scriptedAI;
+
         ai_factory = ai_registry.GetRegistryItem(go->GetAIName());
+
+        // scriptname in db
+        if (!ai_factory)
+            if (GameObjectAI* scriptedAI = sScriptMgr->GetGameObjectAI(go))
+                return scriptedAI;
 
         //future goAI types go here
 

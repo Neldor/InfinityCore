@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2011 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2012 TrinityCore <http://www.trinitycore.org/>
  * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -16,33 +16,34 @@
  * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <ace/Guard_T.h>
+
 #include "Cryptography/BigNumber.h"
 #include <openssl/bn.h>
+#include <openssl/crypto.h>
 #include <algorithm>
 
 BigNumber::BigNumber()
-{
-    _bn = BN_new();
-    _array = NULL;
-}
+    : _bn(BN_new())
+    , _array(NULL)
+{ }
 
 BigNumber::BigNumber(const BigNumber &bn)
-{
-    _bn = BN_dup(bn._bn);
-    _array = NULL;
-}
+    : _bn(BN_dup(bn._bn))
+    , _array(NULL)
+{ }
 
 BigNumber::BigNumber(uint32 val)
+    : _bn(BN_new())
+    , _array(NULL)
 {
-    _bn = BN_new();
     BN_set_word(_bn, val);
-    _array = NULL;
 }
 
 BigNumber::~BigNumber()
 {
     BN_free(_bn);
-    if(_array) delete[] _array;
+    delete[] _array;
 }
 
 void BigNumber::SetDword(uint32 val)
@@ -74,8 +75,10 @@ void BigNumber::SetRand(int numbits)
     BN_rand(_bn, numbits, 0, 1);
 }
 
-BigNumber BigNumber::operator=(const BigNumber &bn)
+BigNumber& BigNumber::operator=(const BigNumber &bn)
 {
+    if (this == &bn)
+        return *this;
     BN_copy(_bn, bn._bn);
     return *this;
 }
@@ -161,12 +164,14 @@ uint32 BigNumber::AsDword()
 
 bool BigNumber::isZero() const
 {
-    return BN_is_zero(_bn)!=0;
+    return BN_is_zero(_bn);
 }
 
 uint8 *BigNumber::AsByteArray(int minSize, bool reverse)
 {
     int length = (minSize >= GetNumBytes()) ? minSize : GetNumBytes();
+
+    ACE_GUARD_RETURN(ACE_Mutex, g, _lock, 0);
 
     if (_array)
     {
@@ -187,12 +192,12 @@ uint8 *BigNumber::AsByteArray(int minSize, bool reverse)
     return _array;
 }
 
-const char *BigNumber::AsHexStr()
+char * BigNumber::AsHexStr() const
 {
     return BN_bn2hex(_bn);
 }
 
-const char *BigNumber::AsDecStr()
+char * BigNumber::AsDecStr() const
 {
     return BN_bn2dec(_bn);
 }

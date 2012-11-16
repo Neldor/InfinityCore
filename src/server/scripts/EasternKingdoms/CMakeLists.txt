@@ -1,3 +1,13 @@
+# Copyright (C) 2008-2012 TrinityCore <http://www.trinitycore.org/>
+#
+# This file is free software; as a special exception the author gives
+# unlimited permission to copy and/or distribute it, with or without
+# modifications, as long as this notice is preserved.
+#
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY, to the extent permitted by law; without even the
+# implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
 set(scripts_STAT_SRCS
   ${scripts_STAT_SRCS}
   EasternKingdoms/ghostlands.cpp
@@ -22,23 +32,17 @@ set(scripts_STAT_SRCS
   EasternKingdoms/Scholomance/boss_lorekeeper_polkelt.cpp
   EasternKingdoms/Scholomance/boss_ras_frostwhisper.cpp
   EasternKingdoms/isle_of_queldanas.cpp
-  EasternKingdoms/boss_kruul.cpp
-  EasternKingdoms/searing_gorge.cpp
-  EasternKingdoms/ZulGurub/boss_hakkar.cpp
-  EasternKingdoms/ZulGurub/boss_mandokir.cpp
-  EasternKingdoms/ZulGurub/boss_marli.cpp
-  EasternKingdoms/ZulGurub/boss_hazzarah.cpp
-  EasternKingdoms/ZulGurub/boss_jeklik.cpp
   EasternKingdoms/ZulGurub/boss_grilek.cpp
-  EasternKingdoms/ZulGurub/zulgurub.h
+  EasternKingdoms/ZulGurub/boss_hazzarah.cpp
+  EasternKingdoms/ZulGurub/boss_jindo_the_godbreaker.cpp
+  EasternKingdoms/ZulGurub/boss_kilnara.cpp
+  EasternKingdoms/ZulGurub/boss_mandokir.cpp
   EasternKingdoms/ZulGurub/boss_renataki.cpp
-  EasternKingdoms/ZulGurub/boss_arlokk.cpp
-  EasternKingdoms/ZulGurub/boss_gahzranka.cpp
   EasternKingdoms/ZulGurub/boss_venoxis.cpp
-  EasternKingdoms/ZulGurub/instance_zulgurub.cpp
-  EasternKingdoms/ZulGurub/boss_jindo.cpp
   EasternKingdoms/ZulGurub/boss_wushoolay.cpp
-  EasternKingdoms/ZulGurub/boss_thekal.cpp
+  EasternKingdoms/ZulGurub/boss_zanzil.cpp
+  EasternKingdoms/ZulGurub/instance_zulgurub.cpp
+  EasternKingdoms/ZulGurub/zulgurub.h
   EasternKingdoms/wetlands.cpp
   EasternKingdoms/arathi_highlands.cpp
   EasternKingdoms/Gnomeregan/instance_gnomeregan.cpp
@@ -75,7 +79,6 @@ set(scripts_STAT_SRCS
   EasternKingdoms/MoltenCore/instance_molten_core.cpp
   EasternKingdoms/MoltenCore/boss_sulfuron_harbinger.cpp
   EasternKingdoms/MoltenCore/boss_magmadar.cpp
-  EasternKingdoms/MoltenCore/molten_core.cpp
   EasternKingdoms/MoltenCore/boss_shazzrah.cpp
   EasternKingdoms/Stratholme/boss_baroness_anastari.cpp
   EasternKingdoms/Stratholme/boss_nerubenkan.cpp
@@ -120,6 +123,8 @@ set(scripts_STAT_SRCS
   EasternKingdoms/BlackrockSpire/boss_rend_blackhand.cpp
   EasternKingdoms/BlackrockSpire/boss_highlord_omokk.cpp
   EasternKingdoms/BlackrockSpire/boss_the_beast.cpp
+  EasternKingdoms/BlackrockSpire/blackrock_spire.h
+  EasternKingdoms/BlackrockSpire/instance_blackrock_spire.cpp
   EasternKingdoms/SunwellPlateau/boss_eredar_twins.cpp
   EasternKingdoms/SunwellPlateau/boss_kiljaeden.cpp
   EasternKingdoms/SunwellPlateau/sunwell_plateau.h
@@ -147,7 +152,6 @@ set(scripts_STAT_SRCS
   EasternKingdoms/ScarletMonastery/boss_arcanist_doan.cpp
   EasternKingdoms/ScarletMonastery/boss_herod.cpp
   EasternKingdoms/ScarletMonastery/boss_scorn.cpp
-  EasternKingdoms/dun_morogh.cpp
   EasternKingdoms/undercity.cpp
   EasternKingdoms/silvermoon_city.cpp
   EasternKingdoms/loch_modan.cpp
@@ -166,7 +170,6 @@ set(scripts_STAT_SRCS
   EasternKingdoms/BlackwingLair/boss_flamegor.cpp
   EasternKingdoms/BlackwingLair/boss_victor_nefarius.cpp
   EasternKingdoms/blasted_lands.cpp
-  EasternKingdoms/elwynn_forest.cpp
   EasternKingdoms/stormwind_city.cpp
   EasternKingdoms/ZulAman/boss_halazzi.cpp
   EasternKingdoms/ZulAman/boss_hexlord.cpp

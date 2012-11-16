@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2011 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2012 TrinityCore <http://www.trinitycore.org/>
  * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -18,7 +18,7 @@
 #ifndef __BATTLEGROUNDRL_H
 #define __BATTLEGROUNDRL_H
 
-class Battleground;
+#include "Battleground.h"
 
 enum BattlegroundRLObjectTypes
 {
@@ -37,34 +37,23 @@ enum BattlegroundRLObjects
     BG_RL_OBJECT_TYPE_BUFF_2    = 184664
 };
 
-class BattlegroundRLScore : public BattlegroundScore
-{
-    public:
-        BattlegroundRLScore() {};
-        virtual ~BattlegroundRLScore() {};
-        //TODO fix me
-};
-
 class BattlegroundRL : public Battleground
 {
-    friend class BattlegroundMgr;
-
     public:
         BattlegroundRL();
         ~BattlegroundRL();
-        void Update(uint32 diff);
 
         /* inherited from BattlegroundClass */
-        virtual void AddPlayer(Player *plr);
-        virtual void Reset();
-        virtual void FillInitialWorldStates(WorldPacket &d);
-        virtual void StartingEventCloseDoors();
-        virtual void StartingEventOpenDoors();
+        void AddPlayer(Player* player);
+        void Reset();
+        void FillInitialWorldStates(WorldPacket &d);
+        void StartingEventCloseDoors();
+        void StartingEventOpenDoors();
 
-        void RemovePlayer(Player *plr, uint64 guid);
-        void HandleAreaTrigger(Player *Source, uint32 Trigger);
+        void RemovePlayer(Player* player, uint64 guid, uint32 team);
+        void HandleAreaTrigger(Player* Source, uint32 Trigger);
         bool SetupBattleground();
-        void HandleKillPlayer(Player* player, Player *killer);
-        bool HandlePlayerUnderMap(Player * plr);
+        void HandleKillPlayer(Player* player, Player* killer);
+        bool HandlePlayerUnderMap(Player* player);
 };
 #endif

@@ -52,7 +52,7 @@ class MapUpdateRequest : public ACE_Method_Request
         virtual int call()
         {
             m_map.Update (m_diff);
-            m_updater.update_finished ();
+            m_updater.update_finished();
             return 0;
         }
 };
@@ -69,7 +69,7 @@ MapUpdater::~MapUpdater()
 
 int MapUpdater::activate(size_t num_threads)
 {
-    return m_executor.activate((int)num_threads, new WDBThreadStartReq1, new WDBThreadEndReq1);
+    return m_executor.start((int)num_threads, new WDBThreadStartReq1, new WDBThreadEndReq1);
 }
 
 int MapUpdater::deactivate()
@@ -81,7 +81,7 @@ int MapUpdater::deactivate()
 
 int MapUpdater::wait()
 {
-    ACE_GUARD_RETURN(ACE_Thread_Mutex, guard, m_mutex, -1);
+    TRINITY_GUARD(ACE_Thread_Mutex, m_mutex);
 
     while (pending_requests > 0)
         m_condition.wait();
@@ -91,7 +91,7 @@ int MapUpdater::wait()
 
 int MapUpdater::schedule_update(Map& map, ACE_UINT32 diff)
 {
-    ACE_GUARD_RETURN(ACE_Thread_Mutex, guard, m_mutex, -1);
+    TRINITY_GUARD(ACE_Thread_Mutex, m_mutex);
 
     ++pending_requests;
 
@@ -113,7 +113,7 @@ bool MapUpdater::activated()
 
 void MapUpdater::update_finished()
 {
-    ACE_GUARD(ACE_Thread_Mutex, guard, m_mutex);
+    TRINITY_GUARD(ACE_Thread_Mutex, m_mutex);
 
     if (pending_requests == 0)
     {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2011 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2012 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -15,8 +15,21 @@
  * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "ScriptPCH.h"
+#include "ScriptMgr.h"
+#include "InstanceScript.h"
 #include "pit_of_saron.h"
+
+// positions for Martin Victus (37591) and Gorkun Ironskull (37592)
+Position const SlaveLeaderPos  = {689.7158f, -104.8736f, 513.7360f, 0.0f};
+// position for Jaina and Sylvanas
+Position const EventLeaderPos2 = {1054.368f, 107.14620f, 628.4467f, 0.0f};
+
+DoorData const Doors[] =
+{
+    {GO_ICE_WALL,   DATA_GARFROST,  DOOR_TYPE_PASSAGE,  BOUNDARY_NONE},
+    {GO_ICE_WALL,   DATA_ICK,       DOOR_TYPE_PASSAGE,  BOUNDARY_NONE},
+    {GO_HALLS_OF_REFLECTION_PORTCULLIS,   DATA_TYRANNUS,       DOOR_TYPE_PASSAGE,  BOUNDARY_NONE},
+};
 
 class instance_pit_of_saron : public InstanceMapScript
 {
@@ -28,6 +41,7 @@ class instance_pit_of_saron : public InstanceMapScript
             instance_pit_of_saron_InstanceScript(Map* map) : InstanceScript(map)
             {
                 SetBossNumber(MAX_ENCOUNTER);
+                LoadDoorData(Doors);
                 _garfrostGUID = 0;
                 _krickGUID = 0;
                 _ickGUID = 0;
@@ -147,6 +161,66 @@ class instance_pit_of_saron : public InstanceMapScript
                     default:
                         break;
                 }
+            }
+
+            void OnGameObjectCreate(GameObject* go)
+            {
+                switch (go->GetEntry())
+                {
+                    case GO_ICE_WALL:
+                    case GO_HALLS_OF_REFLECTION_PORTCULLIS:
+                        AddDoor(go, true);
+                        break;
+                }
+            }
+
+            void OnGameObjectRemove(GameObject* go)
+            {
+                switch (go->GetEntry())
+                {
+                    case GO_ICE_WALL:
+                    case GO_HALLS_OF_REFLECTION_PORTCULLIS:
+                        AddDoor(go, false);
+                        break;
+                }
+            }
+
+            bool SetBossState(uint32 type, EncounterState state)
+            {
+                if (!InstanceScript::SetBossState(type, state))
+                    return false;
+
+                switch (type)
+                {
+                    case DATA_GARFROST:
+                        if (state == DONE)
+                        {
+                            if (Creature* summoner = instance->GetCreature(_garfrostGUID))
+                            {
+                                if (_teamInInstance == ALLIANCE)
+                                    summoner->SummonCreature(NPC_MARTIN_VICTUS_1, SlaveLeaderPos, TEMPSUMMON_MANUAL_DESPAWN);
+                                else
+                                    summoner->SummonCreature(NPC_GORKUN_IRONSKULL_2, SlaveLeaderPos, TEMPSUMMON_MANUAL_DESPAWN);
+                            }
+                        }
+                        break;
+                    case DATA_TYRANNUS:
+                        if (state == DONE)
+                        {
+                            if (Creature* summoner = instance->GetCreature(_tyrannusGUID))
+                            {
+                                if (_teamInInstance == ALLIANCE)
+                                    summoner->SummonCreature(NPC_JAINA_PART2, EventLeaderPos2, TEMPSUMMON_MANUAL_DESPAWN);
+                                else
+                                    summoner->SummonCreature(NPC_SYLVANAS_PART2, EventLeaderPos2, TEMPSUMMON_MANUAL_DESPAWN);
+                            }
+                        }
+                        break;
+                    default:
+                        break;
+                }
+
+                return true;
             }
 
             uint32 GetData(uint32 type)

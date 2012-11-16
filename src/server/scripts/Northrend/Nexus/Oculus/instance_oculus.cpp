@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2011 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2012 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -15,7 +15,9 @@
  * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "ScriptPCH.h"
+#include "ScriptMgr.h"
+#include "ScriptedCreature.h"
+#include "InstanceScript.h"
 #include "oculus.h"
 
 #define MAX_ENCOUNTER 4
@@ -31,14 +33,14 @@ class instance_oculus : public InstanceMapScript
 public:
     instance_oculus() : InstanceMapScript("instance_oculus", 578) { }
 
-    InstanceScript* GetInstanceScript(InstanceMap* pMap) const
+    InstanceScript* GetInstanceScript(InstanceMap* map) const
     {
-        return new instance_oculus_InstanceMapScript(pMap);
+        return new instance_oculus_InstanceMapScript(map);
     }
 
     struct instance_oculus_InstanceMapScript : public InstanceScript
     {
-        instance_oculus_InstanceMapScript(Map* pMap) : InstanceScript(pMap) {Initialize();};
+        instance_oculus_InstanceMapScript(Map* map) : InstanceScript(map) {}
 
         void Initialize()
         {
@@ -52,16 +54,26 @@ public:
             platformUrom = 0;
             centrifugueConstructCounter = 0;
 
-            azureDragonsList.clear();
-            gameObjectList.clear();
-        }
+            eregosCacheGUID = 0;
 
-        void OnCreatureDeath(Creature* creature)
+            gwhelpList.clear();
+            gameObjectList.clear();
+
+            belgaristraszGUID = 0;
+            eternosGUID = 0;
+            verdisaGUID = 0;
+}
+
+        void OnUnitDeath(Unit* unit)
         {
+            Creature* creature = unit->ToCreature();
+            if (!creature)
+                return;
+
             if (creature->GetEntry() != NPC_CENTRIFUGE_CONSTRUCT)
                 return;
 
-             DoUpdateWorldState(WORLD_STATE_CENTRIFUGE_CONSTRUCT_AMOUNT,--centrifugueConstructCounter);
+             DoUpdateWorldState(WORLD_STATE_CENTRIFUGE_CONSTRUCT_AMOUNT, --centrifugueConstructCounter);
 
              if (!centrifugueConstructCounter)
                 if (Creature* varos = instance->GetCreature(varosGUID))
@@ -72,20 +84,16 @@ public:
         {
             if (GetBossState(DATA_DRAKOS_EVENT) == DONE && GetBossState(DATA_VAROS_EVENT) != DONE)
             {
-                player->SendUpdateWorldState(WORLD_STATE_CENTRIFUGE_CONSTRUCT_SHOW,1);
-                player->SendUpdateWorldState(WORLD_STATE_CENTRIFUGE_CONSTRUCT_AMOUNT,centrifugueConstructCounter);
+                player->SendUpdateWorldState(WORLD_STATE_CENTRIFUGE_CONSTRUCT_SHOW, 1);
+                player->SendUpdateWorldState(WORLD_STATE_CENTRIFUGE_CONSTRUCT_AMOUNT, centrifugueConstructCounter);
             } else
             {
-                player->SendUpdateWorldState(WORLD_STATE_CENTRIFUGE_CONSTRUCT_SHOW,0);
-                player->SendUpdateWorldState(WORLD_STATE_CENTRIFUGE_CONSTRUCT_AMOUNT,0);
+                player->SendUpdateWorldState(WORLD_STATE_CENTRIFUGE_CONSTRUCT_SHOW, 0);
+                player->SendUpdateWorldState(WORLD_STATE_CENTRIFUGE_CONSTRUCT_AMOUNT, 0);
             }
         }
 
-        void ProcessEvent(GameObject* /*go*/, uint32 /*eventId*/)
-        {
-        }
-
-        void ProcessEvent(Unit* /*unit*/, uint32 eventId)
+        void ProcessEvent(WorldObject* /*unit*/, uint32 eventId)
         {
             if (eventId != EVENT_CALL_DRAGON)
                 return;
@@ -95,43 +103,82 @@ public:
             if (!varos)
                 return;
 
-            if (Creature* drake = varos->SummonCreature(NPC_AZURE_RING_GUARDIAN,varos->GetPositionX(),varos->GetPositionY(),varos->GetPositionZ()+40))
+            if (Creature* drake = varos->SummonCreature(NPC_AZURE_RING_GUARDIAN, varos->GetPositionX(), varos->GetPositionY(), varos->GetPositionZ()+40))
                 drake->AI()->DoAction(ACTION_CALL_DRAGON_EVENT);
         }
 
         void OnCreatureCreate(Creature* creature)
         {
-            switch(creature->GetEntry())
+            switch (creature->GetEntry())
             {
                 case NPC_DRAKOS:
                     drakosGUID = creature->GetGUID();
                     break;
                 case NPC_VAROS:
                     varosGUID = creature->GetGUID();
+                    if (GetBossState(DATA_DRAKOS_EVENT) == DONE)
+                       creature->SetPhaseMask(1, true);
                     break;
                 case NPC_UROM:
                     uromGUID = creature->GetGUID();
+                    if (GetBossState(DATA_VAROS_EVENT) == DONE)
+                        creature->SetPhaseMask(1, true);
                     break;
                 case NPC_EREGOS:
                     eregosGUID = creature->GetGUID();
+                    if (GetBossState(DATA_UROM_EVENT) == DONE)
+                        creature->SetPhaseMask(1, true);
                     break;
                 case NPC_CENTRIFUGE_CONSTRUCT:
                     if (creature->isAlive())
-                        DoUpdateWorldState(WORLD_STATE_CENTRIFUGE_CONSTRUCT_AMOUNT,++centrifugueConstructCounter);
+                        DoUpdateWorldState(WORLD_STATE_CENTRIFUGE_CONSTRUCT_AMOUNT, ++centrifugueConstructCounter);
+                    break;
+                case NPC_BELGARISTRASZ:
+                    belgaristraszGUID = creature->GetGUID();
+                    if (GetBossState(DATA_DRAKOS_EVENT) == DONE)
+                        creature->SetWalk(true),
+                        creature->GetMotionMaster()->MovePoint(0, 941.453f, 1044.1f, 359.967f),
+                        creature->SetFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP);
+                    break;
+                case NPC_ETERNOS:
+                    eternosGUID = creature->GetGUID();
+                    if (GetBossState(DATA_DRAKOS_EVENT) == DONE)
+                        creature->SetWalk(true),
+                        creature->GetMotionMaster()->MovePoint(0, 943.202f, 1059.35f, 359.967f),
+                        creature->SetFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP);
+                    break;
+                case NPC_VERDISA:
+                    verdisaGUID = creature->GetGUID();
+                    if (GetBossState(DATA_DRAKOS_EVENT) == DONE)
+                        creature->SetWalk(true),
+                        creature->GetMotionMaster()->MovePoint(0, 949.188f, 1032.91f, 359.967f),
+                        creature->SetFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP);
+                    break;
+                case NPC_GREATER_WHELP:
+                    if (GetBossState(DATA_UROM_EVENT) == DONE)
+                        creature->SetPhaseMask(1, true);
+                        gwhelpList.push_back(creature->GetGUID());
                     break;
             }
         }
 
         void OnGameObjectCreate(GameObject* go)
         {
-            if (go->GetEntry() == GO_DRAGON_CAGE_DOOR)
+            switch (go->GetEntry())
             {
-                if (GetBossState(DATA_DRAKOS_EVENT) == DONE)
-                    go->SetGoState(GO_STATE_ACTIVE);
-                else
-                    go->SetGoState(GO_STATE_READY);
-
-                gameObjectList.push_back(go->GetGUID());
+                case GO_DRAGON_CAGE_DOOR:
+                    if (GetBossState(DATA_DRAKOS_EVENT) == DONE)
+                        go->SetGoState(GO_STATE_ACTIVE);
+                    else
+                        go->SetGoState(GO_STATE_READY);
+                    gameObjectList.push_back(go->GetGUID());
+                    break;
+                case GO_EREGOS_CACHE_N:
+                case GO_EREGOS_CACHE_H:
+                    eregosCacheGUID = go->GetGUID();
+                    break;
+                default:
+                    break;
             }
         }
 
@@ -145,14 +192,29 @@ public:
                 case DATA_DRAKOS_EVENT:
                     if (state == DONE)
                     {
-                        DoUpdateWorldState(WORLD_STATE_CENTRIFUGE_CONSTRUCT_SHOW,1);
-                        DoUpdateWorldState(WORLD_STATE_CENTRIFUGE_CONSTRUCT_AMOUNT,centrifugueConstructCounter);
+                        DoUpdateWorldState(WORLD_STATE_CENTRIFUGE_CONSTRUCT_SHOW, 1);
+                        DoUpdateWorldState(WORLD_STATE_CENTRIFUGE_CONSTRUCT_AMOUNT, centrifugueConstructCounter);
                         OpenCageDoors();
+                        FreeDragons();
+                        if (Creature* varos = instance->GetCreature(varosGUID))
+                            varos->SetPhaseMask(1, true);
                     }
                     break;
                 case DATA_VAROS_EVENT:
                     if (state == DONE)
-                        DoUpdateWorldState(WORLD_STATE_CENTRIFUGE_CONSTRUCT_SHOW,0);
+                        DoUpdateWorldState(WORLD_STATE_CENTRIFUGE_CONSTRUCT_SHOW, 0);
+                        if (Creature* urom = instance->GetCreature(uromGUID))
+                            urom->SetPhaseMask(1, true);
+                    break;
+                case DATA_UROM_EVENT:
+                    if (state == DONE)
+                        if (Creature* eregos = instance->GetCreature(eregosGUID))
+                            eregos->SetPhaseMask(1, true);
+                            GreaterWhelps();
+                    break;
+                case DATA_EREGOS_EVENT:
+                    if (state == DONE)
+                        DoRespawnGameObject(eregosCacheGUID, 7*DAY);
                     break;
             }
 
@@ -161,7 +223,7 @@ public:
 
         void SetData(uint32 type, uint32 data)
         {
-            switch(type)
+            switch (type)
             {
                 case DATA_UROM_PLATAFORM:
                     platformUrom = data;
@@ -171,7 +233,7 @@ public:
 
         uint32 GetData(uint32 type)
         {
-            switch(type)
+            switch (type)
             {
                 case DATA_UROM_PLATAFORM:              return platformUrom;
                 // used by condition system
@@ -183,7 +245,7 @@ public:
 
         uint64 GetData64(uint32 identifier)
         {
-            switch(identifier)
+            switch (identifier)
             {
                 case DATA_DRAKOS:                 return drakosGUID;
                 case DATA_VAROS:                  return varosGUID;
@@ -203,6 +265,31 @@ public:
             {
                 if (GameObject* go = instance->GetGameObject(*itr))
                     go->SetGoState(GO_STATE_ACTIVE);
+            }
+        }
+
+        void FreeDragons()
+        {
+            if (Creature* belgaristrasz = instance->GetCreature(belgaristraszGUID))
+                belgaristrasz->SetWalk(true),
+                belgaristrasz->GetMotionMaster()->MovePoint(0, 941.453f, 1044.1f, 359.967f);
+            if (Creature* eternos = instance->GetCreature(eternosGUID))
+                eternos->SetWalk(true),
+                eternos->GetMotionMaster()->MovePoint(0, 943.202f, 1059.35f, 359.967f);
+            if (Creature* verdisa = instance->GetCreature(verdisaGUID))
+                verdisa->SetWalk(true),
+                verdisa->GetMotionMaster()->MovePoint(0, 949.188f, 1032.91f, 359.967f);
+        }
+
+        void GreaterWhelps()
+        {
+            if (gwhelpList.empty())
+                return;
+
+            for (std::list<uint64>::const_iterator itr = gwhelpList.begin(); itr != gwhelpList.end(); ++itr)
+            {
+                if (Creature* gwhelp = instance->GetCreature(*itr))
+                    gwhelp->SetPhaseMask(1, true);
             }
         }
 
@@ -231,7 +318,6 @@ public:
 
             char dataHead1, dataHead2;
 
-
             std::istringstream loadStream(in);
             loadStream >> dataHead1 >> dataHead2;
 
@@ -255,17 +341,21 @@ public:
             uint64 uromGUID;
             uint64 eregosGUID;
 
+            uint64 belgaristraszGUID;
+            uint64 eternosGUID;
+            uint64 verdisaGUID;
+
             uint8 platformUrom;
             uint8 centrifugueConstructCounter;
+
+            uint64 eregosCacheGUID;
 
             std::string str_data;
 
             std::list<uint64> gameObjectList;
-            std::list<uint64> azureDragonsList;
+            std::list<uint64> gwhelpList;
     };
-
 };
-
 
 void AddSC_instance_oculus()
 {

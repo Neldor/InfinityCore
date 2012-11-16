@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2011 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2012 TrinityCore <http://www.trinitycore.org/>
  * Copyright (C) 2006-2009 ScriptDev2 <https://scriptdev2.svn.sourceforge.net/>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -23,7 +23,9 @@ SDComment: In progress. Undead side 75% implemented. Save/load not implemented.
 SDCategory: Stratholme
 EndScriptData */
 
-#include "ScriptPCH.h"
+#include "ScriptMgr.h"
+#include "ScriptedCreature.h"
+#include "InstanceScript.h"
 #include "stratholme.h"
 
 #define GO_SERVICE_ENTRANCE     175368
@@ -122,7 +124,7 @@ class instance_stratholme : public InstanceMapScript
                     return true;
                 }
 
-                sLog->outDebug(LOG_FILTER_TSCR, "TSCR: Instance Stratholme: Cannot open slaugther square yet.");
+                sLog->outDebug(LOG_FILTER_TSCR, "Instance Stratholme: Cannot open slaugther square yet.");
                 return false;
             }
 
@@ -184,7 +186,7 @@ class instance_stratholme : public InstanceMapScript
                         break;
                     case GO_GAUNTLET_GATE1:
                         //weird, but unless flag is set, client will not respond as expected. DB bug?
-                        go->SetFlag(GAMEOBJECT_FLAGS,GO_FLAG_LOCKED);
+                        go->SetFlag(GAMEOBJECT_FLAGS, GO_FLAG_LOCKED);
                         gauntletGate1GUID = go->GetGUID();
                         break;
                     case GO_ZIGGURAT1:
@@ -240,7 +242,7 @@ class instance_stratholme : public InstanceMapScript
                                     break;
                                 EncounterState[0] = data;
                                 events.ScheduleEvent(EVENT_BARON_RUN, 2700000);
-                                sLog->outDebug(LOG_FILTER_TSCR, "TSCR: Instance Stratholme: Baron run in progress.");
+                                sLog->outDebug(LOG_FILTER_TSCR, "Instance Stratholme: Baron run in progress.");
                                 break;
                             case FAIL:
                                 DoRemoveAurasDueToSpellOnPlayers(SPELL_BARON_ULTIMATUM);
@@ -295,13 +297,13 @@ class instance_stratholme : public InstanceMapScript
                             if (!count)
                             {
                                 //a bit itchy, it should close the door after 10 secs, but it doesn't. skipping it for now.
-                                //UpdateGoState(ziggurat4GUID,0,true);
+                                //UpdateGoState(ziggurat4GUID, 0, true);
                                 if (Creature* pBaron = instance->GetCreature(baronGUID))
                                     pBaron->SummonCreature(C_RAMSTEIN, 4032.84f, -3390.24f, 119.73f, 4.71f, TEMPSUMMON_TIMED_OR_DEAD_DESPAWN, 1800000);
-                                sLog->outDebug(LOG_FILTER_TSCR, "TSCR: Instance Stratholme: Ramstein spawned.");
+                                sLog->outDebug(LOG_FILTER_TSCR, "Instance Stratholme: Ramstein spawned.");
                             }
                             else
-                                sLog->outDebug(LOG_FILTER_TSCR, "TSCR: Instance Stratholme: %u Abomnation left to kill.",count);
+                                sLog->outDebug(LOG_FILTER_TSCR, "Instance Stratholme: %u Abomnation left to kill.", count);
                         }
 
                         if (data == NOT_STARTED)
@@ -310,7 +312,7 @@ class instance_stratholme : public InstanceMapScript
                         if (data == DONE)
                         {
                             events.ScheduleEvent(EVENT_SLAUGHTER_SQUARE, 60000);
-                            sLog->outDebug(LOG_FILTER_TSCR, "TSCR: Instance Stratholme: Slaugther event will continue in 1 minute.");
+                            sLog->outDebug(LOG_FILTER_TSCR, "Instance Stratholme: Slaugther event will continue in 1 minute.");
                         }
                         EncounterState[4] = data;
                         break;
@@ -329,7 +331,7 @@ class instance_stratholme : public InstanceMapScript
                                             if (player->GetQuestStatus(QUEST_DEAD_MAN_PLEA) == QUEST_STATUS_INCOMPLETE)
                                                 player->AreaExploredOrEventHappens(QUEST_DEAD_MAN_PLEA);
 
-                                SetData(TYPE_BARON_RUN,DONE);
+                                SetData(TYPE_BARON_RUN, DONE);
                             }
                         }
                         if (data == DONE || data == NOT_STARTED)
@@ -367,8 +369,8 @@ class instance_stratholme : public InstanceMapScript
                 OUT_SAVE_INST_DATA;
 
                 std::ostringstream saveStream;
-                saveStream << EncounterState[0] << " " << EncounterState[1] << " " << EncounterState[2] << " "
-                    << EncounterState[3] << " " << EncounterState[4] << " " << EncounterState[5];
+                saveStream << EncounterState[0] << ' ' << EncounterState[1] << ' ' << EncounterState[2] << ' '
+                    << EncounterState[3] << ' ' << EncounterState[4] << ' ' << EncounterState[5];
 
                 OUT_SAVE_INST_DATA_COMPLETE;
                 return saveStream.str();
@@ -446,7 +448,7 @@ class instance_stratholme : public InstanceMapScript
                         case EVENT_BARON_RUN:
                             if (GetData(TYPE_BARON_RUN) != DONE)
                                 SetData(TYPE_BARON_RUN, FAIL);
-                            sLog->outDebug(LOG_FILTER_TSCR, "TSCR: Instance Stratholme: Baron run event reached end. Event has state %u.", GetData(TYPE_BARON_RUN));
+                            sLog->outDebug(LOG_FILTER_TSCR, "Instance Stratholme: Baron run event reached end. Event has state %u.", GetData(TYPE_BARON_RUN));
                             break;
                         case EVENT_SLAUGHTER_SQUARE:
                             if (Creature* baron = instance->GetCreature(baronGUID))
@@ -456,7 +458,7 @@ class instance_stratholme : public InstanceMapScript
 
                                 HandleGameObject(ziggurat4GUID, true);
                                 HandleGameObject(ziggurat5GUID, true);
-                                sLog->outDebug(LOG_FILTER_TSCR, "TSCR: Instance Stratholme: Black guard sentries spawned. Opening gates to baron.");
+                                sLog->outDebug(LOG_FILTER_TSCR, "Instance Stratholme: Black guard sentries spawned. Opening gates to baron.");
                             }
                             break;
                         default:
@@ -471,7 +473,6 @@ class instance_stratholme : public InstanceMapScript
             return new instance_stratholme_InstanceMapScript(map);
         }
 };
-
 
 void AddSC_instance_stratholme()
 {

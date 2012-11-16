@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2011 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2012 TrinityCore <http://www.trinitycore.org/>
  * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -126,8 +126,11 @@ namespace Trinity
                 case CONTENT_71_80:
                     nBaseExp = 580;
                     break;
+                case CONTENT_81_85:
+                    nBaseExp = 1878;
+                    break;
                 default:
-                    sLog->outError("BaseGain: Unsupported content level %u",content);
+                    sLog->outError(LOG_FILTER_GENERAL, "BaseGain: Unsupported content level %u", content);
                     nBaseExp = 45;
                     break;
             }
@@ -156,18 +159,18 @@ namespace Trinity
             return baseGain;
         }
 
-        inline uint32 Gain(Player *pl, Unit *u)
+        inline uint32 Gain(Player* player, Unit* u)
         {
             uint32 gain;
 
             if (u->GetTypeId() == TYPEID_UNIT &&
                 (((Creature*)u)->isTotem() || ((Creature*)u)->isPet() ||
-                (((Creature*)u)->GetCreatureInfo()->flags_extra & CREATURE_FLAG_EXTRA_NO_XP_AT_KILL) ||
-                ((Creature*)u)->GetCreatureInfo()->type == CREATURE_TYPE_CRITTER))
+                (((Creature*)u)->GetCreatureTemplate()->flags_extra & CREATURE_FLAG_EXTRA_NO_XP_AT_KILL) ||
+                ((Creature*)u)->GetCreatureTemplate()->type == CREATURE_TYPE_CRITTER))
                 gain = 0;
             else
             {
-                gain = BaseGain(pl->getLevel(), u->getLevel(), GetContentLevelsForMapAndZone(u->GetMapId(), u->GetZoneId()));
+                gain = BaseGain(player->getLevel(), u->getLevel(), GetContentLevelsForMapAndZone(u->GetMapId(), u->GetZoneId()));
 
                 if (gain != 0 && u->GetTypeId() == TYPEID_UNIT && ((Creature*)u)->isElite())
                 {
@@ -178,12 +181,10 @@ namespace Trinity
                         gain *= 2;
                 }
 
-	    float premium_rate = pl->GetSession()->IsPremium() ? sWorld->getRate(RATE_XP_KILL_PREMIUM) : 1.0f;
-
-            return uint32(gain*sWorld->getRate(RATE_XP_KILL)*premium_rate);
+                gain = uint32(gain * sWorld->getRate(RATE_XP_KILL));
             }
 
-            sScriptMgr->OnGainCalculation(gain, pl, u);
+            sScriptMgr->OnGainCalculation(gain, player, u);
             return gain;
         }
 

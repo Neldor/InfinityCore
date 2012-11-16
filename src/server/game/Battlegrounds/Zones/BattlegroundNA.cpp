@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2011 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2012 TrinityCore <http://www.trinitycore.org/>
  * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -16,7 +16,6 @@
  * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "Battleground.h"
 #include "BattlegroundNA.h"
 #include "Language.h"
 #include "Object.h"
@@ -26,36 +25,22 @@
 
 BattlegroundNA::BattlegroundNA()
 {
-    m_BgObjects.resize(BG_NA_OBJECT_MAX);
+    BgObjects.resize(BG_NA_OBJECT_MAX);
 
-    m_StartDelayTimes[BG_STARTING_EVENT_FIRST]  = BG_START_DELAY_1M;
-    m_StartDelayTimes[BG_STARTING_EVENT_SECOND] = BG_START_DELAY_30S;
-    m_StartDelayTimes[BG_STARTING_EVENT_THIRD]  = BG_START_DELAY_15S;
-    m_StartDelayTimes[BG_STARTING_EVENT_FOURTH] = BG_START_DELAY_NONE;
+    StartDelayTimes[BG_STARTING_EVENT_FIRST]  = BG_START_DELAY_1M;
+    StartDelayTimes[BG_STARTING_EVENT_SECOND] = BG_START_DELAY_30S;
+    StartDelayTimes[BG_STARTING_EVENT_THIRD]  = BG_START_DELAY_15S;
+    StartDelayTimes[BG_STARTING_EVENT_FOURTH] = BG_START_DELAY_NONE;
     //we must set messageIds
-    m_StartMessageIds[BG_STARTING_EVENT_FIRST]  = LANG_ARENA_ONE_MINUTE;
-    m_StartMessageIds[BG_STARTING_EVENT_SECOND] = LANG_ARENA_THIRTY_SECONDS;
-    m_StartMessageIds[BG_STARTING_EVENT_THIRD]  = LANG_ARENA_FIFTEEN_SECONDS;
-    m_StartMessageIds[BG_STARTING_EVENT_FOURTH] = LANG_ARENA_HAS_BEGUN;
+    StartMessageIds[BG_STARTING_EVENT_FIRST]  = LANG_ARENA_ONE_MINUTE;
+    StartMessageIds[BG_STARTING_EVENT_SECOND] = LANG_ARENA_THIRTY_SECONDS;
+    StartMessageIds[BG_STARTING_EVENT_THIRD]  = LANG_ARENA_FIFTEEN_SECONDS;
+    StartMessageIds[BG_STARTING_EVENT_FOURTH] = LANG_ARENA_HAS_BEGUN;
 }
 
 BattlegroundNA::~BattlegroundNA()
 {
 
-}
-
-void BattlegroundNA::Update(uint32 diff)
-{
-    Battleground::Update(diff);
-
-    if (GetStatus() == STATUS_IN_PROGRESS)
-    {
-        if (GetStartTime() >= 47*MINUTE*IN_MILLISECONDS)    // after 47 minutes without one team losing, the arena closes with no winner and no rating change
-        {
-            UpdateArenaWorldState();
-            CheckArenaAfterTimerConditions();
-        }
-    }
 }
 
 void BattlegroundNA::StartingEventCloseDoors()
@@ -73,18 +58,14 @@ void BattlegroundNA::StartingEventOpenDoors()
         SpawnBGObject(i, 60);
 }
 
-void BattlegroundNA::AddPlayer(Player *plr)
+void BattlegroundNA::AddPlayer(Player* player)
 {
-    Battleground::AddPlayer(plr);
-    //create score and add it to map, default values are set in constructor
-    BattlegroundNAScore* sc = new BattlegroundNAScore;
-
-    m_PlayerScores[plr->GetGUID()] = sc;
-
+    Battleground::AddPlayer(player);
+    PlayerScores[player->GetGUID()] = new BattlegroundScore;
     UpdateArenaWorldState();
 }
 
-void BattlegroundNA::RemovePlayer(Player* /*plr*/, uint64 /*guid*/)
+void BattlegroundNA::RemovePlayer(Player* /*player*/, uint64 /*guid*/, uint32 /*team*/)
 {
     if (GetStatus() == STATUS_WAIT_LEAVE)
         return;
@@ -93,49 +74,43 @@ void BattlegroundNA::RemovePlayer(Player* /*plr*/, uint64 /*guid*/)
     CheckArenaWinConditions();
 }
 
-void BattlegroundNA::HandleKillPlayer(Player *player, Player *killer)
+void BattlegroundNA::HandleKillPlayer(Player* player, Player* killer)
 {
     if (GetStatus() != STATUS_IN_PROGRESS)
         return;
 
     if (!killer)
     {
-        sLog->outError("BattlegroundNA: Killer player not found");
+        sLog->outError(LOG_FILTER_BATTLEGROUND, "BattlegroundNA: Killer player not found");
         return;
     }
 
-    Battleground::HandleKillPlayer(player,killer);
+    Battleground::HandleKillPlayer(player, killer);
 
     UpdateArenaWorldState();
     CheckArenaWinConditions();
 }
 
-bool BattlegroundNA::HandlePlayerUnderMap(Player *player)
+bool BattlegroundNA::HandlePlayerUnderMap(Player* player)
 {
-    player->TeleportTo(GetMapId(),4055.504395f,2919.660645f,13.611241f,player->GetOrientation(),false);
+    player->TeleportTo(GetMapId(), 4055.504395f, 2919.660645f, 13.611241f, player->GetOrientation());
     return true;
 }
 
-void BattlegroundNA::HandleAreaTrigger(Player *Source, uint32 Trigger)
+void BattlegroundNA::HandleAreaTrigger(Player* player, uint32 trigger)
 {
     if (GetStatus() != STATUS_IN_PROGRESS)
         return;
 
-    //uint32 SpellId = 0;
-    //uint64 buff_guid = 0;
-    switch(Trigger)
+    switch (trigger)
     {
         case 4536:                                          // buff trigger?
         case 4537:                                          // buff trigger?
             break;
         default:
-            sLog->outError("WARNING: Unhandled AreaTrigger in Battleground: %u", Trigger);
-            Source->GetSession()->SendAreaTriggerMessage("Warning: Unhandled AreaTrigger in Battleground: %u", Trigger);
+            Battleground::HandleAreaTrigger(player, trigger);
             break;
     }
-
-    //if (buff_guid)
-    //    HandleTriggerBuff(buff_guid,Source);
 }
 
 void BattlegroundNA::FillInitialWorldStates(WorldPacket &data)
@@ -161,19 +136,9 @@ bool BattlegroundNA::SetupBattleground()
         || !AddObject(BG_NA_OBJECT_BUFF_1, BG_NA_OBJECT_TYPE_BUFF_1, 4009.189941f, 2895.250000f, 13.052700f, -1.448624f, 0, 0, 0.6626201f, -0.7489557f, 120)
         || !AddObject(BG_NA_OBJECT_BUFF_2, BG_NA_OBJECT_TYPE_BUFF_2, 4103.330078f, 2946.350098f, 13.051300f, -0.06981307f, 0, 0, 0.03489945f, -0.9993908f, 120))
     {
-        sLog->outErrorDb("BatteGroundNA: Failed to spawn some object!");
+        sLog->outError(LOG_FILTER_SQL, "BatteGroundNA: Failed to spawn some object!");
         return false;
     }
 
     return true;
 }
-
-/*
-20:12:14 id:036668 [S2C] SMSG_INIT_WORLD_STATES (706 = 0x02C2) len: 86
-0000: 2f 02 00 00 72 0e 00 00 00 00 00 00 09 00 11 0a  |  /...r...........
-0010: 00 00 01 00 00 00 0f 0a 00 00 00 00 00 00 10 0a  |  ................
-0020: 00 00 00 00 00 00 d4 08 00 00 00 00 00 00 d8 08  |  ................
-0030: 00 00 00 00 00 00 d7 08 00 00 00 00 00 00 d6 08  |  ................
-0040: 00 00 00 00 00 00 d5 08 00 00 00 00 00 00 d3 08  |  ................
-0050: 00 00 00 00 00 00                                |  ......
-*/
